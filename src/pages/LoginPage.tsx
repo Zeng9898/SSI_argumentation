@@ -26,8 +26,8 @@ const TEACHER_FEATURES = [
 ];
 
 const STUDENT_FEATURES = [
-  { icon: 'forum',         text: '對話式情境作答' },
-  { icon: 'explore',       text: '循序探索科學概念' },
+  { icon: 'forum',         text: '對話式論證練習' },
+  { icon: 'Cognition_2',       text: '互動式反思引導' },
   { icon: 'monitor_heart', text: '個人學習體檢表' },
 ];
 
@@ -304,7 +304,7 @@ function SettingsPopover({ fontSize, onChange }: SettingsPopoverProps) {
 }
 
 /* ── LoginPage ──────────────────────────────────────── */
-export default function LoginPage() {
+export default function LoginPage({ onStudentSelect }: { onStudentSelect?: () => void }) {
   const [openInfo, setOpenInfo] = useState<Variant | null>(null);
   const [loginVariant, setLoginVariant] = useState<Variant | null>(null);
   const [openSettings, setOpenSettings] = useState(false);
@@ -397,7 +397,7 @@ export default function LoginPage() {
             variant="student"
             infoOpen={openInfo === 'student'}
             onToggleInfo={() => setOpenInfo((p) => (p === 'student' ? null : 'student'))}
-            onSelect={() => setLoginVariant('student')}
+            onSelect={() => { setLoginVariant('student'); onStudentSelect?.(); }}
           />
         </div>
       </div>
