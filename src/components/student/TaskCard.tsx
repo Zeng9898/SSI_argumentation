@@ -42,7 +42,7 @@ export interface Task {
   quizId: string;
   title: string;
   questionCount: number;
-  dueDate: string;
+  startDate: string;
   status: TaskStatus;
   stars?: number;
   completedAt?: string | null;
@@ -97,11 +97,6 @@ interface StatusCfg {
 }
 
 /* ── Helpers ──────────────────────────────────────────── */
-const daysFromToday = (dateStr: string) => {
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const due = new Date(dateStr); due.setHours(0, 0, 0, 0);
-  return Math.round((due.getTime() - today.getTime()) / 86400000);
-};
 const formatShortDate = (dateStr?: string | null) => {
   if (!dateStr) return '';
   const d = new Date(dateStr);
@@ -111,18 +106,15 @@ const formatShortDate = (dateStr?: string | null) => {
 
 /* ── TaskCard ─────────────────────────────────────────── */
 export default function TaskCard({
-  status, title, questionCount, dueDate, stars = 0, completedAt,
-  bestRecord, quizId, assignmentId, taskType = 'diagnosis', onStart, onViewReport,
+  status, title, questionCount, startDate, stars = 0, completedAt,
+  bestRecord, quizId, assignmentId, taskType = 'scenario', onStart, onViewReport,
 }: TaskCardProps) {
   const isScenario  = taskType === 'scenario';
   const taskImg     = isScenario ? pickMagnifier(assignmentId || quizId || title) : pickFlask(assignmentId || quizId || title);
-  const cfg         = (isScenario ? ScenarioStatusConfig : DiagnosisStatusConfig)[status] ?? DiagnosisStatusConfig.next;
+  const cfg         = (isScenario ? ScenarioStatusConfig : DiagnosisStatusConfig)[status] ?? ScenarioStatusConfig.next;
   const isCompleted = status === 'completed';
   const isExpired   = status === 'expired';
   const isNext      = status === 'next';
-
-  const daysLeft = isNext && dueDate ? daysFromToday(dueDate) : null;
-  const isUrgent = daysLeft != null && daysLeft <= 3;
 
   const progressPct = isCompleted && bestRecord && questionCount
     ? Math.round((bestRecord.correctCount / questionCount) * 100)
@@ -130,7 +122,6 @@ export default function TaskCard({
 
   return (
     <div className={`relative ${isNext ? 'hover:-translate-y-0.5 transition-transform duration-200' : ''} ${isExpired ? 'opacity-90' : ''}`}>
-      {isUrgent    && <Sticker variant="urgent"    text={daysLeft! <= 0 ? '今天截止' : `剩 ${daysLeft} 天`} />}
       {isCompleted && <Sticker variant="completed" text="完成" />}
       {isExpired   && <Sticker variant="expired"   text="已過期" />}
 
@@ -164,8 +155,7 @@ export default function TaskCard({
             <p className="text-sm sm:text-base text-[#7A5232] font-medium truncate">
               {isCompleted
                 ? `完成於 ${formatShortDate(completedAt)} · 答對 ${bestRecord?.correctCount ?? 0} 題`
-                : isExpired ? `已於 ${formatShortDate(dueDate)} 截止`
-                : `截止：${formatShortDate(dueDate)}`}
+                : `開始時間：${formatShortDate(startDate)}`}
             </p>
           </div>
 

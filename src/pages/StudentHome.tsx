@@ -12,56 +12,20 @@ import settingsIcon from '../assets/icons/settings_wood.png';
 /* ── Mock data ────────────────────────────────────────── */
 const MOCK_STUDENT_NAME = '林小明';
 
-const MOCK_DIAGNOSIS_PENDING: Task[] = [
-  {
-    assignmentId: 'a1', taskType: 'diagnosis', quizId: 'q1',
-    title: '水溶液基礎診斷', questionCount: 8, dueDate: '2026-05-21',
-    status: 'next', stars: 0, completedAt: null, bestRecord: null,
-  },
-  {
-    assignmentId: 'a2', taskType: 'diagnosis', quizId: 'q2',
-    title: '溶解度與溫度', questionCount: 6, dueDate: '2026-05-20',
-    status: 'next', stars: 0, completedAt: null, bestRecord: null,
-  },
-];
-
-const MOCK_DIAGNOSIS_COMPLETED: Task[] = [
-  {
-    assignmentId: 'a3', taskType: 'diagnosis', quizId: 'q3',
-    title: '酸鹼指示劑', questionCount: 10, dueDate: '2026-05-10',
-    status: 'completed', stars: 2, completedAt: '2026-05-09',
-    bestRecord: { correctCount: 7, quizId: 'q3', completedAt: '2026-05-09' },
-  },
-];
-
 const MOCK_SCENARIO_PENDING: Task[] = [
   {
     assignmentId: 'b1', taskType: 'scenario', quizId: 's1',
-    title: '小明的果汁實驗', questionCount: 5, dueDate: '2026-05-23',
+    title: '討論議題一：生成式AI與文字創作', questionCount: 5, startDate: '2026-05-19',
     status: 'next', stars: 0, completedAt: null, bestRecord: null,
-  },
-];
-
-const MOCK_SCENARIO_COMPLETED: Task[] = [
-  {
-    assignmentId: 'b2', taskType: 'scenario', quizId: 's2',
-    title: '海水為什麼是鹹的', questionCount: 4, dueDate: '2026-05-08',
-    status: 'completed', stars: 3, completedAt: '2026-05-07',
-    bestRecord: { correctCount: 4, quizId: 's2', completedAt: '2026-05-07' },
   },
 ];
 
 /* ── StudentHome ──────────────────────────────────────── */
 export default function StudentHome({ onBack }: { onBack?: () => void }) {
-  const [diagnosisHistoryOpen, setDiagnosisHistoryOpen] = useState(false);
-  const [scenarioHistoryOpen, setScenarioHistoryOpen]   = useState(false);
-  const [settingsOpen, setSettingsOpen]                 = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const totalCompleted = MOCK_DIAGNOSIS_COMPLETED.length + MOCK_SCENARIO_COMPLETED.length;
-  const totalAll       = totalCompleted + MOCK_DIAGNOSIS_PENDING.length + MOCK_SCENARIO_PENDING.length;
-  const pendingCount   = MOCK_DIAGNOSIS_PENDING.length + MOCK_SCENARIO_PENDING.length;
-
-  const stats = { completedAssignments: totalCompleted, totalAssignments: totalAll, pending: pendingCount };
+  const pendingCount = MOCK_SCENARIO_PENDING.length;
+  const stats = { completedAssignments: 0, totalAssignments: pendingCount, pending: pendingCount };
 
   return (
     <div
@@ -119,56 +83,14 @@ export default function StudentHome({ onBack }: { onBack?: () => void }) {
             style={{ backgroundImage: 'repeating-linear-gradient(45deg, #F4D58A 0px, #F4D58A 2px, transparent 2px, transparent 16px)' }} />
 
           <div className="relative max-w-2xl mx-auto px-4 sm:px-6 pt-6 pb-10">
-            {/* Diagnosis pending */}
-            {MOCK_DIAGNOSIS_PENDING.length > 0 && (
-              <Section title="迷思診斷" subtitle="先測驗找出你對科學概念的迷思" accentColor="#D08B2E" icon="quiz">
-                <div className="space-y-3 sm:space-y-4">
-                  {MOCK_DIAGNOSIS_PENDING.map((task) => (
-                    <TaskCard key={task.assignmentId} {...task} onStart={() => {}} />
-                  ))}
-                </div>
-              </Section>
-            )}
-
-            {/* Diagnosis completed */}
-            {MOCK_DIAGNOSIS_COMPLETED.length > 0 && (
-              <Section title="已完成的診斷" count={MOCK_DIAGNOSIS_COMPLETED.length}
-                collapsible open={diagnosisHistoryOpen}
-                onToggle={() => setDiagnosisHistoryOpen((v) => !v)}
-                className="mt-4">
-                <div className="space-y-3 sm:space-y-4">
-                  {MOCK_DIAGNOSIS_COMPLETED.map((task) => (
-                    <TaskCard key={task.assignmentId} {...task} onStart={() => {}} onViewReport={() => {}} />
-                  ))}
-                </div>
-              </Section>
-            )}
-
-            {/* Scenario pending */}
-            {MOCK_SCENARIO_PENDING.length > 0 && (
-              <Section title="情境治療" subtitle="與 AI 對話練習科學論證，治療你的迷思"
-                accentColor="#3F8B5E" icon="forum" className="mt-6">
-                <div className="space-y-3 sm:space-y-4">
-                  {MOCK_SCENARIO_PENDING.map((task) => (
-                    <TaskCard key={task.assignmentId} {...task} onStart={() => {}} />
-                  ))}
-                </div>
-              </Section>
-            )}
-
-            {/* Scenario completed */}
-            {MOCK_SCENARIO_COMPLETED.length > 0 && (
-              <Section title="已完成的治療" count={MOCK_SCENARIO_COMPLETED.length}
-                collapsible open={scenarioHistoryOpen}
-                onToggle={() => setScenarioHistoryOpen((v) => !v)}
-                className="mt-4">
-                <div className="space-y-3 sm:space-y-4">
-                  {MOCK_SCENARIO_COMPLETED.map((task) => (
-                    <TaskCard key={task.assignmentId} {...task} onStart={() => {}} onViewReport={() => {}} />
-                  ))}
-                </div>
-              </Section>
-            )}
+            <Section title="情境治療" subtitle="與 AI 對話練習科學論證，治療你的迷思"
+              accentColor="#3F8B5E" icon="forum">
+              <div className="space-y-3 sm:space-y-4">
+                {MOCK_SCENARIO_PENDING.map((task) => (
+                  <TaskCard key={task.assignmentId} {...task} onStart={() => {}} />
+                ))}
+              </div>
+            </Section>
           </div>
         </div>
       </main>

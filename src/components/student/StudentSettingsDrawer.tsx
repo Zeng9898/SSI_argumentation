@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Icon, WOOD_OUTER, WOOD_INNER_CREAM } from '../ui/woodKit';
-import { FONT_SIZE_OPTIONS, getFontSize } from '../../lib/fontSize';
+import { FONT_SIZE_OPTIONS, getFontSize, setFontSize } from '../../lib/fontSize';
 import type { FontSizeValue } from '../../lib/fontSize';
 import mascotImg from '../../assets/illustrations/scilens_mascot.png';
 
@@ -77,7 +77,7 @@ export default function StudentSettingsDrawer({ open, onClose }: Props) {
                 const active = currentFontSize === opt.value;
                 return (
                   <button key={opt.value} type="button"
-                    onClick={() => setCurrentFontSize(opt.value)}
+                    onClick={() => { setFontSize(opt.value); setCurrentFontSize(opt.value); }}
                     className={`flex flex-col items-center gap-1 py-3 rounded-2xl border-[3px] cursor-pointer
                                font-game font-bold transition-all duration-300
                                ease-[cubic-bezier(0.34,1.56,0.64,1)]
@@ -116,18 +116,17 @@ export default function StudentSettingsDrawer({ open, onClose }: Props) {
                 <div className="flex items-center gap-3 pb-2">
                   <img src={mascotImg} alt="SciLens 吉祥物" className="w-14 h-14 object-contain animate-breath" />
                   <div>
-                    <p className="font-game text-lg font-bold text-[#5A3E22]">SciLens</p>
-                    <p className="text-xs text-[#7A5232]">自然科學迷思概念診斷系統</p>
+                    <p className="font-game text-lg font-bold text-[#5A3E22]">SSI Lens</p>
+                    <p className="text-xs text-[#7A5232]">社會性科學議題論證系統</p>
                   </div>
                 </div>
                 <div className="space-y-2 text-sm text-[#5A3E22] leading-relaxed">
-                  <AboutItem icon="science"  text="針對國小五年級「水溶液」單元設計" />
                   <AboutItem icon="quiz"     text="透過診斷測驗找出你的迷思概念" />
                   <AboutItem icon="forum"    text="透過情境治療對話修正迷思概念" />
                   <AboutItem icon="insights" text="完成後查看個人學習報告" />
                 </div>
                 <div className="pt-2 border-t border-[#C19A6B]/30">
-                  <p className="text-xs text-[#7A5232]/70 text-center">SciLens v1.0</p>
+                  <p className="text-xs text-[#7A5232]/70 text-center">SSI Lens v1.0</p>
                 </div>
               </div>
             )}
