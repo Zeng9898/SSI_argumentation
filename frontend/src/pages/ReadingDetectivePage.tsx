@@ -12,6 +12,7 @@ interface Props {
   onDelete: (id: string) => void;
   onBack?: () => void;
   onNextStage?: () => void;
+  onLogout?: () => void;
 }
 import bgImg from '../assets/backgrounds/bg_chiheisen_green.jpg';
 import mascotImg from '../assets/illustrations/scilens_mascot.png';
@@ -19,7 +20,7 @@ import settingsIcon from '../assets/icons/settings_wood.png';
 
 type LeftTab = 'overview' | 'news';
 
-export default function ReadingDetectivePage({ notes, onAdd, onEdit, onDelete, onBack, onNextStage }: Props) {
+export default function ReadingDetectivePage({ notes, onAdd, onEdit, onDelete, onBack, onNextStage, onLogout }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [leftTab, setLeftTab]           = useState<LeftTab>('overview');
 
@@ -117,7 +118,7 @@ export default function ReadingDetectivePage({ notes, onAdd, onEdit, onDelete, o
         </div>
       </main>
 
-      <StudentSettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <StudentSettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} onLogout={onLogout ?? (() => {})} />
     </div>
   );
 }

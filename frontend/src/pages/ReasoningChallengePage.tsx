@@ -11,7 +11,14 @@ import settingsIcon from '../assets/icons/settings_wood.png';
 
 type LeftTab = 'overview' | 'notes';
 
-export default function ReasoningChallengePage({ notes, onBack }: { notes: Note[]; onBack?: () => void }) {
+interface Props {
+  notes: Note[];
+  scenarioId: number;
+  onBack?: () => void;
+  onLogout?: () => void;
+}
+
+export default function ReasoningChallengePage({ notes, scenarioId, onBack, onLogout }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [leftTab, setLeftTab]           = useState<LeftTab>('overview');
 
@@ -103,13 +110,13 @@ export default function ReasoningChallengePage({ notes, onBack }: { notes: Note[
 
             {/* ── Right: reasoning form ─────────────────── */}
             <div className="w-[42%] sm:w-[44%] flex-shrink-0 flex flex-col min-w-0 overflow-hidden">
-              <ReasoningChallengePanel />
+              <ReasoningChallengePanel scenarioId={scenarioId} />
             </div>
           </div>
         </div>
       </main>
 
-      <StudentSettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <StudentSettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} onLogout={onLogout ?? (() => {})} />
     </div>
   );
 }

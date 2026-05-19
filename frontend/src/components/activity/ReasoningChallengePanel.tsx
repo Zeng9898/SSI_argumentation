@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Icon } from '../ui/woodKit';
+import { api } from '../../lib/api';
 
 /* ── Types ───────────────────────────────────────────────── */
 type Stance = '贊成' | '不贊成';
@@ -11,11 +12,21 @@ interface Argument     { id: string; text: string; counters: Counter[]; }
 const genId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
 /* ── ReasoningChallengePanel ─────────────────────────────── */
-export default function ReasoningChallengePanel() {
+export default function ReasoningChallengePanel({ scenarioId }: { scenarioId: number }) {
   const [stance,     setStance]     = useState<Stance | null>(null);
   const [agreeLevel, setAgreeLevel] = useState<number | null>(null);
   const [args,       setArgs]       = useState<Argument[]>([]);
   const [saved,      setSaved]      = useState(false);
+  const [saving,     setSaving]     = useState(false);
+
+  useEffect(() => {
+    api.reasoning(scenarioId).then(({ submission }) => {
+      if (!submission) return;
+      setStance(submission.stance);
+      setAgreeLevel(submission.agreeLevel);
+      setArgs(submission.args as Argument[]);
+    }).catch(console.error);
+  }, [scenarioId]);
 
   /* ── Q3: arguments ── */
   const addArg    = () => setArgs((p) => [...p, { id: genId(), text: '', counters: [] }]);
@@ -68,9 +79,18 @@ export default function ReasoningChallengePanel() {
   /* Q5 flattened view: all counters across all arguments */
   const allCounters = args.flatMap((a) => a.counters.map((c) => ({ argId: a.id, counter: c })));
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    if (!stance || !agreeLevel || saving) return;
+    setSaving(true);
+    try {
+      await api.saveReasoning(scenarioId, { stance, agreeLevel, args });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -238,16 +258,18 @@ export default function ReasoningChallengePanel() {
           <button
             type="button"
             onClick={handleSave}
+            disabled={saving || !stance || !agreeLevel}
             className={`w-full flex items-center justify-center gap-1.5 py-3 rounded-xl
                        border-2 font-game font-black text-xs sm:text-sm
                        transition-all duration-300 cursor-pointer
+                       disabled:opacity-50 disabled:cursor-not-allowed
               ${saved
                 ? 'bg-[#D8F0C0] border-[#5C8A2E] text-[#2E5C1A]'
                 : 'bg-linear-to-b from-[#F4D58A] to-[#F0B962] border-[#9B5E18] text-[#7A4A18] shadow-[0_3px_0_#9B5E18] hover:shadow-[0_1px_0_#9B5E18] hover:translate-y-0.5'
               }`}
           >
-            <Icon name={saved ? 'check_circle' : 'save'} filled className="text-sm" />
-            {saved ? '已儲存！' : '儲存'}
+            <Icon name={saved ? 'check_circle' : saving ? 'hourglass_empty' : 'save'} filled className="text-sm" />
+            {saved ? '已儲存！' : saving ? '儲存中…' : '儲存'}
           </button>
         </div>
       </div>

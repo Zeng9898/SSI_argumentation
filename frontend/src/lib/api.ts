@@ -55,4 +55,26 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify({ status }),
     }),
+
+  notes: (scenarioId: number) =>
+    request<{ notes: object[] }>(`/notes/${scenarioId}`),
+  saveNotes: (scenarioId: number, notes: object[]) =>
+    request<{ ok: boolean }>(`/notes/${scenarioId}`, {
+      method: 'POST',
+      body: JSON.stringify({ notes }),
+    }),
+
+  reasoning: (scenarioId: number) =>
+    request<{ submission: ReasoningSubmission | null }>(`/reasoning/${scenarioId}`),
+  saveReasoning: (scenarioId: number, data: ReasoningSubmission) =>
+    request<{ ok: boolean }>(`/reasoning/${scenarioId}`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 };
+
+export interface ReasoningSubmission {
+  stance: '贊成' | '不贊成';
+  agreeLevel: number;
+  args: object[];
+}
