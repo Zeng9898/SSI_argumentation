@@ -27,7 +27,7 @@ function scenarioToTask(s: Scenario): Task {
 }
 
 /* ── StudentHome ──────────────────────────────────────── */
-export default function StudentHome({ onBack, onStartActivity }: { onBack?: () => void; onStartActivity?: () => void }) {
+export default function StudentHome({ onBack, onStartActivity }: { onBack?: () => void; onStartActivity?: (scenarioId: number) => void }) {
   const { user } = useAuth();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tasks, setTasks]               = useState<Task[]>([]);
@@ -39,8 +39,9 @@ export default function StudentHome({ onBack, onStartActivity }: { onBack?: () =
   }, []);
 
   const handleStart = async (assignmentId: string) => {
-    await api.updateActivity(Number(assignmentId), 'reading').catch(console.error);
-    onStartActivity?.();
+    const scenarioId = Number(assignmentId);
+    await api.updateActivity(scenarioId, 'reading').catch(console.error);
+    onStartActivity?.(scenarioId);
   };
 
   const completedCount = tasks.filter(t => t.status === 'completed').length;

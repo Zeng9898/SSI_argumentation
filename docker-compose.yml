@@ -34,7 +34,7 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER:-ssi_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ssi_db}
       JWT_SECRET: ${JWT_SECRET}
     ports:
-      - "3001:3001"
+      - "18091:3001"
     networks:
       - appnet
 
@@ -48,7 +48,7 @@ services:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@local.dev}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
     ports:
-      - "5050:80"
+      - "15050:80"
     networks:
       - appnet
 
@@ -60,7 +60,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "8080:80"
+      - "18090:80"
     networks:
       - appnet
 
