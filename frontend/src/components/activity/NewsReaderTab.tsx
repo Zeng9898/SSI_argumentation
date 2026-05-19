@@ -8,6 +8,8 @@ interface Article {
   author?: string;
   date: string;
   paragraphs: string[];
+  links?: { label: string; url: string }[];
+  linksLabel?: string;
 }
 
 const NEWS: Article[] = [
@@ -25,6 +27,10 @@ const NEWS: Article[] = [
       '九段理江後來表示，AI可以生成文字，但真正想要寫作、想要表達、想和世界對話的那種衝動，還是來自人類。有人因此認為，這次事件真正值得討論的，不只是「有沒有使用AI」，而是「作者怎麼使用AI」，以及作品的核心想法是不是仍然來自人類自己。',
       '這個事件讓更多人開始討論：在文學創作中，AI可以扮演什麼角色？如果作品的一小部分由AI幫忙完成，這樣算不算創作？不同的人可能會有不同看法，而這些不同意見，也成為今天大家思考AI與創作關係的重要例子。',
     ],
+    links: [
+      { label: 'Facebook 貼文', url: 'https://www.facebook.com/share/p/1GM8PviZgd/' },
+      { label: 'Openbook 閱讀誌原文', url: 'https://www.openbook.org.tw/article/p-70568' },
+    ],
   },
   {
     id: 'news2',
@@ -40,6 +46,9 @@ const NEWS: Article[] = [
       '這件事被發現後，提供這份內容的公司表示，已經解僱這位作者。刊登這份特刊的報社也說，正在調查裡面是不是還有其他錯誤內容，並且已經把數位版本下架。報社也強調，新聞和出版工作不能只靠科技，還需要人的查證、判斷和負責任的態度。',
       '這不是媒體第一次因為使用AI而發生錯誤。以前也有其他媒體因為太快相信AI產出的內容，結果出現假作者、錯誤報導或不正確的資料。這些事件提醒大家，AI雖然可以幫助整理資訊、加快工作速度，但它有時也會產生看起來很像真的、其實卻是錯的內容。',
       '因此，使用AI時不能只看表面，還需要再次查證，確認資料是否正確。對媒體、作家和讀者來說，這件事都提醒大家：當我們閱讀或使用AI產出的內容時，必須更小心分辨真假，才能避免被錯誤資訊誤導。',
+    ],
+    links: [
+      { label: 'AP News, Newspaper\'s summer book list recommends nonexistent books thanks to AI.', url: 'https://apnews.com/article/fake-book-list-ai-newspaper-summer-reading-fcdf454a5b467dad3adfed6ca1a224d2' },
     ],
   },
   {
@@ -57,6 +66,9 @@ const NEWS: Article[] = [
       '專家認為，AI未必會讓大量的人完全失去工作，但可能會讓一些工作內容改變，或讓某些職位減少、某些職位增加。這也提醒大家，當AI被用在工作中時，人們除了要了解AI能幫忙做什麼，也要思考哪些事情仍然需要人的判斷、創意和責任。',
       '因此，AI進入工作現場，可能帶來方便，也可能帶來挑戰。對公司來說，AI可以提高效率；對員工來說，則需要重新思考未來的工作方式，以及自己還需要培養哪些新的能力。',
     ],
+    links: [
+      { label: 'Reuters 原文', url: 'https://www.reuters.com/business/retail-consumer/amazons-workforce-reduce-rollout-generative-ai-agents-2025-06-17/' },
+    ],
   },
   {
     id: 'news4',
@@ -69,6 +81,10 @@ const NEWS: Article[] = [
       'UNESCO認為，AI可以成為幫助人類的工具，但不應該取代人的思考。如果人們太依賴AI來寫作、整理內容或表達想法，可能會減少自己練習思考、判斷和表達的機會，影響原本應該慢慢培養的能力。尤其是學生，如果沒有仔細檢查，就直接相信AI產生的內容，可能會學到不正確的資訊。',
       '另外，UNESCO也提醒，AI的內容大多來自網路上的大量資料，這些資料可能沒有經過原作者同意，也可能只代表某些常見的觀點，忽略其他不同的聲音。所以，當我們使用AI來幫忙寫作時，不能只看它寫得快不快、順不順，還要去想：內容是否正確？理由是否可靠？這些文字能不能真正代表自己的想法？',
       '因此，AI可以幫助人類工作，但真正重要的判斷、查證和負責，還是需要人自己來完成。',
+    ],
+    linksLabel: '參考資料',
+    links: [
+      { label: 'United Nations Educational, Scientific and Cultural Organization. (2023). Guidance for generative AI in education and research. UNESCO. https://doi.org/10.54675/EWZM9535', url: 'https://doi.org/10.54675/EWZM9535' },
     ],
   },
 ];
@@ -126,6 +142,26 @@ export default function NewsReaderTab() {
             </p>
           ))}
         </div>
+
+        {/* Links */}
+        {current.links && (
+          <div className="mt-4 pt-3 border-t border-[#C19A6B]/30">
+            <p className="text-[10px] sm:text-xs font-bold text-[#8B5E3C] mb-1.5">{current.linksLabel ?? '新聞連結'}</p>
+            <div className="space-y-1">
+              {current.links.map((link, i) => (
+                <a
+                  key={i}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-[10px] sm:text-xs text-[#6B8E6B] underline underline-offset-2 hover:text-[#4A6A4A]"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
