@@ -260,7 +260,7 @@ function LoginModal({ variant, onClose, onSuccess }: LoginModalProps) {
                            text-[#5A3E22]
                            focus:outline-none focus:border-[#8B5E3C] focus:bg-white"
               />
-              <p className="mt-1 text-[11px] text-[#9B7A4F]">預設密碼與帳號相同</p>
+              <p className="mt-1 text-[11px] text-[#9B7A4F]">預設帳號為班級加座號（例如：60101），預設密碼為學號（例如：109115）</p>
             </div>
 
             {error && (
