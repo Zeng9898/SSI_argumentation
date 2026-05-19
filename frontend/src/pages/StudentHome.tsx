@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Icon, WOOD_OUTER, WOOD_INNER_CREAM, WoodIconButton } from '../components/ui/woodKit';
 import TaskCard from '../components/student/TaskCard';
 import type { Task } from '../components/student/TaskCard';
@@ -8,24 +8,44 @@ import bgImg from '../assets/backgrounds/bg_chiheisen_green.jpg';
 import studentImg from '../assets/illustrations/irasutoya_student_clean.png';
 import mascotImg from '../assets/illustrations/scilens_mascot.png';
 import settingsIcon from '../assets/icons/settings_wood.png';
+import { useAuth } from '../contexts/AuthContext';
+import { api, type Scenario } from '../lib/api';
 
-/* ── Mock data ────────────────────────────────────────── */
-const MOCK_STUDENT_NAME = '林小明';
-
-const MOCK_SCENARIO_PENDING: Task[] = [
-  {
-    assignmentId: 'b1', taskType: 'scenario', quizId: 's1',
-    title: '討論議題一：生成式AI與文字創作', questionCount: 5, startDate: '2026-05-19',
-    status: 'next', stars: 0, completedAt: null, bestRecord: null,
-  },
-];
+function scenarioToTask(s: Scenario): Task {
+  return {
+    assignmentId: s.id.toString(),
+    taskType: 'scenario',
+    quizId: s.id.toString(),
+    title: s.title,
+    questionCount: 5,
+    startDate: s.created_at.slice(0, 10),
+    status: s.status === 'completed' ? 'completed' : 'next',
+    stars: 0,
+    completedAt: s.completed_at,
+    bestRecord: null,
+  };
+}
 
 /* ── StudentHome ──────────────────────────────────────── */
-export default function StudentHome({ onBack }: { onBack?: () => void }) {
+export default function StudentHome({ onBack, onStartActivity }: { onBack?: () => void; onStartActivity?: () => void }) {
+  const { user } = useAuth();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [tasks, setTasks]               = useState<Task[]>([]);
 
-  const pendingCount = MOCK_SCENARIO_PENDING.length;
-  const stats = { completedAssignments: 0, totalAssignments: pendingCount, pending: pendingCount };
+  useEffect(() => {
+    api.scenarios()
+      .then(({ scenarios }) => setTasks(scenarios.map(scenarioToTask)))
+      .catch(console.error);
+  }, []);
+
+  const handleStart = async (assignmentId: string) => {
+    await api.updateActivity(Number(assignmentId), 'reading').catch(console.error);
+    onStartActivity?.();
+  };
+
+  const completedCount = tasks.filter(t => t.status === 'completed').length;
+  const pendingCount   = tasks.length - completedCount;
+  const stats = { completedAssignments: completedCount, totalAssignments: tasks.length, pending: pendingCount };
 
   return (
     <div
@@ -43,7 +63,7 @@ export default function StudentHome({ onBack }: { onBack?: () => void }) {
         <div className="flex items-center justify-between gap-2 sm:gap-3 px-3 sm:px-5 pt-3 sm:pt-4 animate-fade-up">
           <div className="flex items-center gap-2 min-w-0">
             <WoodIconButton icon="arrow_back" ariaLabel="返回" size="sm" onClick={onBack} />
-            <AvatarPill studentName={MOCK_STUDENT_NAME} />
+            <AvatarPill studentName={user?.name ?? ''} studentClass={user?.class} />
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
             <CombinedStats stats={stats} />
@@ -67,7 +87,7 @@ export default function StudentHome({ onBack }: { onBack?: () => void }) {
               你有 <span className="text-[#D08B2E]">{pendingCount}</span> 個任務要挑戰！
             </p>
             <p className="text-sm sm:text-base font-bold text-[#7A5232] mt-1 drop-shadow-[0_1px_0_rgba(255,255,255,0.6)]">
-              完成後可在「已完成」區查看你的學習報告
+              完成後可在「已完成」區查看你的學習紀錄喔！
             </p>
           </div>
         </div>
@@ -83,11 +103,11 @@ export default function StudentHome({ onBack }: { onBack?: () => void }) {
             style={{ backgroundImage: 'repeating-linear-gradient(45deg, #F4D58A 0px, #F4D58A 2px, transparent 2px, transparent 16px)' }} />
 
           <div className="relative max-w-2xl mx-auto px-4 sm:px-6 pt-6 pb-10">
-            <Section title="情境治療" subtitle="與 AI 對話練習科學論證，治療你的迷思"
+            <Section title="議題探討" subtitle="與 AI 對話練習科學論證，提升批判力"
               accentColor="#3F8B5E" icon="forum">
               <div className="space-y-3 sm:space-y-4">
-                {MOCK_SCENARIO_PENDING.map((task) => (
-                  <TaskCard key={task.assignmentId} {...task} onStart={() => {}} />
+                {tasks.map((task) => (
+                  <TaskCard key={task.assignmentId} {...task} onStart={() => handleStart(task.assignmentId)} />
                 ))}
               </div>
             </Section>
@@ -95,20 +115,21 @@ export default function StudentHome({ onBack }: { onBack?: () => void }) {
         </div>
       </main>
 
-      <StudentSettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <StudentSettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} onLogout={onBack ?? (() => {})} />
     </div>
   );
 }
 
 /* ── AvatarPill ───────────────────────────────────────── */
-function AvatarPill({ studentName }: { studentName: string }) {
+function AvatarPill({ studentName, studentClass }: { studentName: string; studentClass?: string | null }) {
   return (
     <div className={`${WOOD_OUTER} flex-shrink-0`}>
       <div className={`${WOOD_INNER_CREAM} pl-1 pr-1 sm:pr-3 py-1 flex items-center gap-1.5`}>
         <img src={studentImg} alt={studentName} className="w-7 h-7 sm:w-8 sm:h-8 object-contain" />
-        <p className="hidden sm:flex font-game text-base sm:text-lg font-bold text-[#5A3E22] items-center leading-none">
-          {studentName}
-        </p>
+        <div className="hidden sm:flex flex-col leading-none">
+          {studentClass && <p className="font-game text-xs text-[#7A5232]">{studentClass}</p>}
+          <p className="font-game text-base sm:text-lg font-bold text-[#5A3E22]">{studentName}</p>
+        </div>
       </div>
     </div>
   );

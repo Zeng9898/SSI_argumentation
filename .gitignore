@@ -26,3 +26,7 @@ dist-ssr
 # Reference project (not part of this codebase)
 reference/
 learning_material/
+
+# Environment secrets
+.env
+

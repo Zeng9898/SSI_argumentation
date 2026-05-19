@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import bgImg from '../assets/backgrounds/bg_chiheisen_green.jpg';
 import mascotImg from '../assets/illustrations/scilens_mascot.png';
 import teacherImg from '../assets/illustrations/irasutoya_teacher_boy.png';
@@ -177,17 +178,42 @@ function RoleCard({ variant, infoOpen, onToggleInfo, onSelect }: RoleCardProps) 
 }
 
 /* ── PlaceholderModal ───────────────────────────────── */
-interface PlaceholderModalProps {
+interface LoginModalProps {
   variant: Variant;
   onClose: () => void;
+  onSuccess: () => void;
 }
 
-function PlaceholderModal({ variant, onClose }: PlaceholderModalProps) {
-  const isTeacher = variant === 'teacher';
-  const heading = isTeacher ? '老師登入' : '學生登入';
-  const ctaBg = isTeacher
+function LoginModal({ variant, onClose, onSuccess }: LoginModalProps) {
+  const { login } = useAuth();
+  const isTeacher  = variant === 'teacher';
+  const heading    = isTeacher ? '老師登入' : '學生登入';
+  const ctaBg      = isTeacher
     ? 'from-[#A2D550] to-[#65A626] border-[#3E7818] shadow-[0_4px_0_#3E7818]'
     : 'from-[#5BA8DC] to-[#2D8AC4] border-[#1A5F94] shadow-[0_4px_0_#1A5F94]';
+
+  const [account,  setAccount]  = useState('');
+  const [password, setPassword] = useState('');
+  const [error,    setError]    = useState('');
+  const [loading,  setLoading]  = useState(false);
+
+  const handleSubmit = async () => {
+    if (!account || !password) { setError('請輸入帳號與密碼'); return; }
+    setError('');
+    setLoading(true);
+    try {
+      await login(account, password);
+      onSuccess();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '登入失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleSubmit();
+  };
 
   return (
     <div
@@ -212,6 +238,9 @@ function PlaceholderModal({ variant, onClose }: PlaceholderModalProps) {
               <label className="block text-xs font-bold text-[#5A3E22] mb-1">帳號</label>
               <input
                 type="text"
+                value={account}
+                onChange={(e) => setAccount(e.target.value)}
+                onKeyDown={onKeyDown}
                 placeholder={isTeacher ? '範例：aaa001' : '範例：115001'}
                 autoComplete="username"
                 className="w-full px-4 py-2.5 rounded-xl border-2 border-[#C19A6B] bg-white/80
@@ -223,6 +252,9 @@ function PlaceholderModal({ variant, onClose }: PlaceholderModalProps) {
               <label className="block text-xs font-bold text-[#5A3E22] mb-1">密碼</label>
               <input
                 type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={onKeyDown}
                 autoComplete="current-password"
                 className="w-full px-4 py-2.5 rounded-xl border-2 border-[#C19A6B] bg-white/80
                            text-[#5A3E22]
@@ -231,22 +263,29 @@ function PlaceholderModal({ variant, onClose }: PlaceholderModalProps) {
               <p className="mt-1 text-[11px] text-[#9B7A4F]">預設密碼與帳號相同</p>
             </div>
 
+            {error && (
+              <p className="text-xs text-red-600 font-medium text-center">{error}</p>
+            )}
+
             <div className="flex gap-2 pt-1">
               <button
                 type="button"
                 onClick={onClose}
+                disabled={loading}
                 className="flex-1 py-2.5 rounded-full border-2 border-[#C19A6B] bg-white/70
-                           text-[#5A3E22] font-bold hover:bg-white cursor-pointer"
+                           text-[#5A3E22] font-bold hover:bg-white cursor-pointer disabled:opacity-50"
               >
                 取消
               </button>
               <button
                 type="button"
+                onClick={handleSubmit}
+                disabled={loading}
                 className={`flex-[1.4] py-2.5 rounded-full border-2 bg-linear-to-b ${ctaBg}
                            text-white font-game text-lg font-bold tracking-wide cursor-pointer
-                           hover:translate-y-0.5 transition-transform`}
+                           hover:translate-y-0.5 transition-transform disabled:opacity-50`}
               >
-                登入
+                {loading ? '登入中…' : '登入'}
               </button>
             </div>
           </div>
@@ -304,7 +343,7 @@ function SettingsPopover({ fontSize, onChange }: SettingsPopoverProps) {
 }
 
 /* ── LoginPage ──────────────────────────────────────── */
-export default function LoginPage({ onStudentSelect }: { onStudentSelect?: () => void }) {
+export default function LoginPage({ onLoginSuccess }: { onLoginSuccess?: () => void }) {
   const [openInfo, setOpenInfo] = useState<Variant | null>(null);
   const [loginVariant, setLoginVariant] = useState<Variant | null>(null);
   const [openSettings, setOpenSettings] = useState(false);
@@ -397,7 +436,7 @@ export default function LoginPage({ onStudentSelect }: { onStudentSelect?: () =>
             variant="student"
             infoOpen={openInfo === 'student'}
             onToggleInfo={() => setOpenInfo((p) => (p === 'student' ? null : 'student'))}
-            onSelect={() => { setLoginVariant('student'); onStudentSelect?.(); }}
+            onSelect={() => setLoginVariant('student')}
           />
         </div>
       </div>
@@ -413,9 +452,10 @@ export default function LoginPage({ onStudentSelect }: { onStudentSelect?: () =>
 
       {/* Modal */}
       {loginVariant && (
-        <PlaceholderModal
+        <LoginModal
           variant={loginVariant}
           onClose={() => setLoginVariant(null)}
+          onSuccess={() => { setLoginVariant(null); onLoginSuccess?.(); }}
         />
       )}
     </div>

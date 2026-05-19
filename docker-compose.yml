@@ -1,0 +1,72 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ssi_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ssi_db}
+      POSTGRES_USER: ${POSTGRES_USER:-ssi_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/db/init.sql:/docker-entrypoint-initdb.d/01_init.sql
+      - ./backend/db/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
+    networks:
+      - appnet
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ssi_user} -d ${POSTGRES_DB:-ssi_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    container_name: ssi_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 3001
+      NODE_ENV: production
+      DATABASE_URL: postgres://${POSTGRES_USER:-ssi_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ssi_db}
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "3001:3001"
+    networks:
+      - appnet
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: ssi_pgadmin
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@local.dev}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+    ports:
+      - "5050:80"
+    networks:
+      - appnet
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: ssi_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+    networks:
+      - appnet
+
+volumes:
+  postgres_data:
+
+networks:
+  appnet:
+    driver: bridge

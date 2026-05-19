@@ -142,11 +142,11 @@ export default function TaskCard({
               isScenario ? 'bg-[#E0F0E8] border-[#3F8B5E] text-[#2E6B47]' : 'bg-[#FFF1D8] border-[#D08B2E] text-[#7A4A18]'
             }`}>
               <Icon name={isScenario ? 'forum' : 'quiz'} filled className="text-[10px] sm:text-xs" />
-              {isScenario ? '情境治療' : '迷思診斷'}
+              {isScenario ? '議題探討' : '迷思診斷'}
             </span>
             <h3 className={`font-black text-lg sm:text-xl text-[#5A3E22] mb-2 truncate ${isExpired ? 'opacity-70' : ''}`}>{title}</h3>
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-sm sm:text-base font-bold text-[#5A3E22] flex-shrink-0">{questionCount} 題</span>
+              <span className="text-sm sm:text-base font-bold text-[#5A3E22] flex-shrink-0">進度</span>
               <div className="flex-1 h-2.5 sm:h-3 bg-[#E0D5BC] rounded-full overflow-hidden border border-[#8B5E3C]/40">
                 <div className={`h-full ${cfg.progressFill} transition-all duration-500`} style={{ width: `${progressPct}%` }} />
               </div>

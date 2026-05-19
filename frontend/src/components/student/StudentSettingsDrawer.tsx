@@ -3,6 +3,7 @@ import { Icon, WOOD_OUTER, WOOD_INNER_CREAM } from '../ui/woodKit';
 import { FONT_SIZE_OPTIONS, getFontSize, setFontSize } from '../../lib/fontSize';
 import type { FontSizeValue } from '../../lib/fontSize';
 import mascotImg from '../../assets/illustrations/scilens_mascot.png';
+import { useAuth } from '../../contexts/AuthContext';
 
 const FONT_SIZE_ICONS: Record<string, string> = {
   small: 'text_decrease',
@@ -10,15 +11,14 @@ const FONT_SIZE_ICONS: Record<string, string> = {
   large: 'text_increase',
 };
 
-/* Mock student info */
-const MOCK_STUDENT = { name: '探險者', className: '五甲', seatNumber: '1' };
-
 interface Props {
   open: boolean;
   onClose: () => void;
+  onLogout: () => void;
 }
 
-export default function StudentSettingsDrawer({ open, onClose }: Props) {
+export default function StudentSettingsDrawer({ open, onClose, onLogout }: Props) {
+  const { user } = useAuth();
   const [currentFontSize, setCurrentFontSize] = useState<FontSizeValue>(getFontSize);
   const [aboutOpen, setAboutOpen] = useState(false);
 
@@ -97,9 +97,9 @@ export default function StudentSettingsDrawer({ open, onClose }: Props) {
           {/* 2 — Personal info */}
           <SettingsSection icon="person" title="個人資訊">
             <div className="space-y-2.5">
-              <InfoRow icon="badge"       label="姓名" value={MOCK_STUDENT.name} />
-              <InfoRow icon="school"      label="班級" value={MOCK_STUDENT.className} />
-              <InfoRow icon="event_seat"  label="座號" value={MOCK_STUDENT.seatNumber} />
+              <InfoRow icon="badge"       label="姓名" value={user?.name ?? '—'} />
+              <InfoRow icon="school"      label="班級" value={user?.class ?? '—'} />
+              <InfoRow icon="event_seat"  label="座號" value={user?.seat_number?.toString() ?? '—'} />
             </div>
           </SettingsSection>
 
@@ -121,9 +121,9 @@ export default function StudentSettingsDrawer({ open, onClose }: Props) {
                   </div>
                 </div>
                 <div className="space-y-2 text-sm text-[#5A3E22] leading-relaxed">
-                  <AboutItem icon="quiz"     text="透過診斷測驗找出你的迷思概念" />
-                  <AboutItem icon="forum"    text="透過情境治療對話修正迷思概念" />
-                  <AboutItem icon="insights" text="完成後查看個人學習報告" />
+                  <AboutItem icon="forum"         text="對話式論證練習" />
+                  <AboutItem icon="Cognition_2"   text="互動式反思引導" />
+                  <AboutItem icon="monitor_heart" text="個人學習體檢表" />
                 </div>
                 <div className="pt-2 border-t border-[#C19A6B]/30">
                   <p className="text-xs text-[#7A5232]/70 text-center">SSI Lens v1.0</p>
@@ -135,7 +135,7 @@ export default function StudentSettingsDrawer({ open, onClose }: Props) {
 
         {/* Footer: logout */}
         <div className="px-4 py-4 border-t-[3px] border-[#C19A6B] flex-shrink-0">
-          <button type="button" onClick={onClose}
+          <button type="button" onClick={onLogout}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl cursor-pointer
                        border-[3px] border-[#E74C5E]/60 bg-white
                        text-[#E74C5E] font-game font-bold text-base tracking-wide
