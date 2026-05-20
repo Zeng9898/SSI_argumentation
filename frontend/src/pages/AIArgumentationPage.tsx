@@ -3,23 +3,26 @@ import { WoodIconButton } from '../components/ui/woodKit';
 import StudentSettingsDrawer from '../components/student/StudentSettingsDrawer';
 import StageOverviewTab from '../components/activity/StageOverviewTab';
 import ReadingNotesTab from '../components/activity/ReadingNotesTab';
+import PreviousArgumentsTab from '../components/activity/PreviousArgumentsTab';
+import AIChatPanel, { type Message } from '../components/activity/AIChatPanel';
 import type { Note } from '../components/activity/NotesPanel';
-import ReasoningChallengePanel from '../components/activity/ReasoningChallengePanel';
 import bgImg from '../assets/backgrounds/bg_chiheisen_green.jpg';
 import mascotImg from '../assets/illustrations/scilens_mascot.png';
 import settingsIcon from '../assets/icons/settings_wood.png';
 
-type LeftTab = 'overview' | 'notes';
+type LeftTab = 'overview' | 'notes' | 'myargs';
 
 interface Props {
   notes: Note[];
   scenarioId: number;
+  messages: Message[];
+  onMessagesChange: (messages: Message[]) => void;
   onBack?: () => void;
   onNextStage?: () => void;
   onLogout?: () => void;
 }
 
-export default function ReasoningChallengePage({ notes, scenarioId, onBack, onNextStage, onLogout }: Props) {
+export default function AIArgumentationPage({ notes, scenarioId, messages, onMessagesChange, onBack, onNextStage, onLogout }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [leftTab, setLeftTab]           = useState<LeftTab>('overview');
 
@@ -63,12 +66,12 @@ export default function ReasoningChallengePage({ notes, scenarioId, onBack, onNe
         <div className="leading-tight min-w-0">
           <p className="font-game text-base sm:text-lg font-black text-[#5A3E22]
                         drop-shadow-[0_2px_0_rgba(255,255,255,0.6)]">
-            推理挑戰
+            AI 論證擂台
           </p>
           <p className="text-xs sm:text-sm font-medium text-[#7A5232] mt-0.5
                         drop-shadow-[0_1px_0_rgba(255,255,255,0.6)] leading-snug
                         line-clamp-2 sm:line-clamp-none">
-            請根據你目前的理解，回答你對這個議題的立場與理由。
+            請和AI一起討論這個議題。把你的想法說清楚，也試著回應AI的提問，看看你的理由和證據能不能支持你的立場。
           </p>
         </div>
       </div>
@@ -100,35 +103,48 @@ export default function ReasoningChallengePage({ notes, scenarioId, onBack, onNe
                 onClick={() => setLeftTab('notes')}
                 color="orange"
               />
+              <BookmarkTab
+                label={`我的論點`}
+                suffixLabel="1"
+                active={leftTab === 'myargs'}
+                onClick={() => setLeftTab('myargs')}
+                color="purple"
+              />
             </div>
 
             {/* ── Left content ──────────────────────────── */}
             <div className="flex-1 min-w-0 flex flex-col overflow-hidden
                             border-r-2 border-[#C19A6B]/25">
-              {leftTab === 'overview' && <StageOverviewTab currentStage={2} />}
+              {leftTab === 'overview' && <StageOverviewTab currentStage={3} onNextStage={onNextStage} nextStageLabel="進入 AI 對話筆記整理" />}
               {leftTab === 'notes'    && <ReadingNotesTab notes={notes} />}
+              {leftTab === 'myargs'   && <PreviousArgumentsTab scenarioId={scenarioId} />}
             </div>
 
-            {/* ── Right: reasoning form ─────────────────── */}
+            {/* ── Right: AI chat panel ─────────────────── */}
             <div className="w-[42%] sm:w-[44%] flex-shrink-0 flex flex-col min-w-0 overflow-hidden">
-              <ReasoningChallengePanel scenarioId={scenarioId} onNextStage={onNextStage} />
+              <AIChatPanel scenarioId={scenarioId} messages={messages} onMessagesChange={onMessagesChange} />
             </div>
           </div>
         </div>
       </main>
 
-      <StudentSettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} onLogout={onLogout ?? (() => {})} />
+      <StudentSettingsDrawer
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onLogout={onLogout ?? (() => {})}
+      />
     </div>
   );
 }
 
 /* ── BookmarkTab ──────────────────────────────────────── */
-function BookmarkTab({ label, active, onClick, color }: {
-  label: string; active: boolean; onClick: () => void; color: 'green' | 'orange';
+function BookmarkTab({ label, suffixLabel, active, onClick, color }: {
+  label: string; suffixLabel?: string; active: boolean; onClick: () => void; color: 'green' | 'orange' | 'purple';
 }) {
-  const activeClass = color === 'green'
-    ? 'bg-linear-to-b from-[#98D478] to-[#4E9E2E] text-white border-transparent shadow-[0_3px_6px_rgba(78,158,46,0.35),inset_0_1px_0_rgba(255,255,255,0.3)]'
-    : 'bg-linear-to-b from-[#F4D58A] to-[#D08B2E] text-white border-transparent shadow-[0_3px_6px_rgba(208,139,46,0.35),inset_0_1px_0_rgba(255,255,255,0.3)]';
+  const activeClass =
+    color === 'green'  ? 'bg-linear-to-b from-[#98D478] to-[#4E9E2E] text-white border-transparent shadow-[0_3px_6px_rgba(78,158,46,0.35),inset_0_1px_0_rgba(255,255,255,0.3)]'
+    : color === 'orange' ? 'bg-linear-to-b from-[#F4D58A] to-[#D08B2E] text-white border-transparent shadow-[0_3px_6px_rgba(208,139,46,0.35),inset_0_1px_0_rgba(255,255,255,0.3)]'
+    : 'bg-linear-to-b from-[#C8A8F0] to-[#7B4CC8] text-white border-transparent shadow-[0_3px_6px_rgba(123,76,200,0.35),inset_0_1px_0_rgba(255,255,255,0.3)]';
 
   return (
     <button
@@ -148,6 +164,11 @@ function BookmarkTab({ label, active, onClick, color }: {
         style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
       >
         {label}
+        {suffixLabel && (
+          <span style={{ textOrientation: 'upright' }}>
+            {suffixLabel}
+          </span>
+        )}
       </span>
     </button>
   );

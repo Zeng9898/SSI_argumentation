@@ -1,0 +1,182 @@
+const express = require('express');
+const OpenAI  = require('openai');
+const pool    = require('../db');
+const auth    = require('../middleware/auth');
+
+const router = express.Router();
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
+
+const PROMPT_BY_GROUP = {
+  experimental: process.env.OPENAI_PROMPT_ID_ARGUMENTATION_EXPERIMENTAL,
+  control:      process.env.OPENAI_PROMPT_ID_ARGUMENTATION_CONTROL,
+};
+
+const OPENING_MESSAGE = '你可以先說說看，你比較贊成還是不贊成讓生成式AI取代原本的文字生產工作？';
+
+// 查詢某個 user/scenario/surface 的所有訊息
+async function fetchMessages(userId, scenarioId, surface) {
+  const { rows } = await pool.query(
+    `SELECT id, role, content FROM ai_messages
+     WHERE user_id = $1 AND scenario_id = $2 AND surface = $3
+     ORDER BY created_at ASC, id ASC`,
+    [userId, scenarioId, surface]
+  );
+  return rows.map((r) => ({
+    id:      String(r.id),
+    role:    r.role === 'assistant' ? 'ai' : 'user',
+    content: r.content,
+  }));
+}
+
+// POST /ai-chat/:scenarioId/init — 初始化或還原對話
+router.post('/:scenarioId/init', auth, async (req, res) => {
+  const scenarioId = parseInt(req.params.scenarioId, 10);
+  try {
+    const existing = await pool.query(
+      `SELECT id FROM ai_conversations
+       WHERE user_id = $1 AND scenario_id = $2 AND surface = 'argumentation'`,
+      [req.user.id, scenarioId]
+    );
+
+    if (existing.rows[0]) {
+      // 已有對話，還原訊息
+      return res.json({ messages: await fetchMessages(req.user.id, scenarioId, 'argumentation') });
+    }
+
+    // 全新對話：建立 ai_conversations 並存入開場白
+    await pool.query(
+      `INSERT INTO ai_conversations (user_id, scenario_id, surface)
+       VALUES ($1, $2, 'argumentation')`,
+      [req.user.id, scenarioId]
+    );
+
+    const saved = await pool.query(
+      `INSERT INTO ai_messages (user_id, scenario_id, surface, role, content)
+       VALUES ($1, $2, 'argumentation', 'assistant', $3)
+       RETURNING id`,
+      [req.user.id, scenarioId, OPENING_MESSAGE]
+    );
+
+    res.json({
+      messages: [{ id: String(saved.rows[0].id), role: 'ai', content: OPENING_MESSAGE }],
+    });
+  } catch (err) {
+    console.error('[POST /ai-chat/init]', err);
+    res.status(500).json({ error: '伺服器錯誤' });
+  }
+});
+
+// GET /ai-chat/:scenarioId — 取得既有訊息
+router.get('/:scenarioId', auth, async (req, res) => {
+  const scenarioId = parseInt(req.params.scenarioId, 10);
+  try {
+    res.json({ messages: await fetchMessages(req.user.id, scenarioId, 'argumentation') });
+  } catch (err) {
+    console.error('[GET /ai-chat]', err);
+    res.status(500).json({ error: '伺服器錯誤' });
+  }
+});
+
+// POST /ai-chat/:scenarioId — 送出訊息並取得 AI 回覆
+router.post('/:scenarioId', auth, async (req, res) => {
+  const scenarioId = parseInt(req.params.scenarioId, 10);
+  const { userMessage } = req.body;
+
+  if (!userMessage?.trim()) {
+    return res.status(400).json({ error: 'userMessage 不能為空' });
+  }
+
+  const promptId = PROMPT_BY_GROUP[req.user.group_type];
+  if (!promptId) {
+    return res.status(500).json({
+      error: `找不到 group_type="${req.user.group_type}" 對應的 prompt，請確認 .env 設定`,
+    });
+  }
+
+  try {
+    // 查找現有 conversation 的 OpenAI ID
+    const convRow = await pool.query(
+      `SELECT openai_conversation_id FROM ai_conversations
+       WHERE user_id = $1 AND scenario_id = $2 AND surface = 'argumentation'`,
+      [req.user.id, scenarioId]
+    );
+
+    let convId = convRow.rows[0]?.openai_conversation_id ?? null;
+
+    if (!convId) {
+      // 首次發言：建立 OpenAI conversation
+      const conv = await openai.conversations.create({
+        metadata: {
+          app:        'ssi_argumentation',
+          surface:    'argumentation',
+          userId:     String(req.user.id),
+          scenarioId: String(scenarioId),
+          groupType:  req.user.group_type,
+        },
+      });
+      convId = conv.id;
+
+      if (convRow.rows[0]) {
+        // init 已建立 row，補上 openai_conversation_id
+        await pool.query(
+          `UPDATE ai_conversations
+           SET openai_conversation_id = $1, prompt_id = $2, updated_at = NOW()
+           WHERE user_id = $3 AND scenario_id = $4 AND surface = 'argumentation'`,
+          [convId, promptId, req.user.id, scenarioId]
+        );
+      } else {
+        // init 從未呼叫，直接建立完整 row
+        await pool.query(
+          `INSERT INTO ai_conversations
+             (openai_conversation_id, user_id, scenario_id, surface, prompt_id)
+           VALUES ($1, $2, $3, 'argumentation', $4)`,
+          [convId, req.user.id, scenarioId, promptId]
+        );
+      }
+    }
+
+    // 存使用者訊息
+    await pool.query(
+      `INSERT INTO ai_messages
+         (openai_conversation_id, user_id, scenario_id, surface, role, content)
+       VALUES ($1, $2, $3, 'argumentation', 'user', $4)`,
+      [convId, req.user.id, scenarioId, userMessage.trim()]
+    );
+
+    // 呼叫 OpenAI
+    const response = await openai.responses.create({
+      model:        OPENAI_MODEL,
+      prompt:       { id: promptId },
+      conversation: convId,
+      input:        [{ role: 'user', content: userMessage.trim() }],
+      store:        true,
+    });
+
+    const assistantMessage = response.output_text ?? '';
+
+    // 存 AI 訊息
+    const saved = await pool.query(
+      `INSERT INTO ai_messages
+         (openai_conversation_id, user_id, scenario_id, surface, role, content, response_id)
+       VALUES ($1, $2, $3, 'argumentation', 'assistant', $4, $5)
+       RETURNING id`,
+      [convId, req.user.id, scenarioId, assistantMessage, response.id]
+    );
+
+    await pool.query(
+      `UPDATE ai_conversations
+       SET last_response_id = $1, updated_at = NOW()
+       WHERE openai_conversation_id = $2`,
+      [response.id, convId]
+    );
+
+    res.json({ assistantMessage, messageId: String(saved.rows[0].id) });
+  } catch (err) {
+    console.error('[POST /ai-chat]', err);
+    res.status(500).json({ error: '伺服器錯誤' });
+  }
+});
+
+module.exports = router;

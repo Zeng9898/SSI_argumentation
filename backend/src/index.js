@@ -1,10 +1,13 @@
 require('dotenv').config();
 const express    = require('express');
 const cors       = require('cors');
-const authRoutes      = require('./routes/auth');
-const scenarioRoutes  = require('./routes/scenarios');
-const notesRoutes     = require('./routes/notes');
-const reasoningRoutes = require('./routes/reasoning');
+const authRoutes            = require('./routes/auth');
+const scenarioRoutes        = require('./routes/scenarios');
+const notesRoutes           = require('./routes/notes');
+const reasoningRoutes       = require('./routes/reasoning');
+const reviewReasoningRoutes = require('./routes/review-reasoning');
+const aiChatRoutes          = require('./routes/ai-chat');
+const aiReflectionRoutes    = require('./routes/ai-reflection');
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -19,7 +22,10 @@ app.get('/health', (_req, res) => {
 app.use('/auth',      authRoutes);
 app.use('/scenarios', scenarioRoutes);
 app.use('/notes',     notesRoutes);
-app.use('/reasoning', reasoningRoutes);
+app.use('/reasoning',        reasoningRoutes);
+app.use('/review-reasoning', reviewReasoningRoutes);
+app.use('/ai-chat',          aiChatRoutes);
+app.use('/ai-reflection',    aiReflectionRoutes);
 
 app.listen(PORT, () => {
   console.log(`Backend running on port ${PORT}`);

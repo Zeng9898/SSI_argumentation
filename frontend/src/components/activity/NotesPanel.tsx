@@ -20,9 +20,15 @@ interface NotesPanelProps {
   onNextStage?: () => void;
 }
 
+const STANCES: Stance[] = ['支持', '反對', '無'];
+
 export default function NotesPanel({ notes, onAdd, onEdit, onDelete, onNextStage }: NotesPanelProps) {
   const [mode, setMode]               = useState<PanelMode>('list');
   const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [filter, setFilter]           = useState<Stance | null>(null);
+
+  const toggle   = (s: Stance) => setFilter((prev) => (prev === s ? null : s));
+  const filtered = filter ? notes.filter((n) => n.stance === filter) : notes;
 
   const handleAdd = (data: { stance: Stance; content: string }) => {
     onAdd(data);
@@ -82,8 +88,35 @@ export default function NotesPanel({ notes, onAdd, onEdit, onDelete, onNextStage
         )}
       </div>
 
+      {/* Stance tab bar — only in list mode with notes */}
+      {mode === 'list' && notes.length > 0 && (
+        <div className="shrink-0 flex gap-1 px-3 pt-2.5 border-b-2 border-[#C19A6B]/25">
+          {STANCES.map((s) => {
+            const count = notes.filter((n) => n.stance === s).length;
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={() => toggle(s)}
+                className={`shrink-0 px-2.5 sm:px-3 py-1.5 rounded-t-xl
+                            text-[11px] sm:text-xs font-game font-bold
+                            border-2 border-b-0 transition-all duration-200
+                            cursor-pointer whitespace-nowrap
+                  ${filter === s
+                    ? 'bg-[#FFF8E7] border-[#C19A6B] text-[#5A3E22] translate-y-0.5'
+                    : 'bg-[#EDE0C4]/60 border-[#C19A6B]/40 text-[#8B6840] hover:bg-[#F5EDD8]/80'
+                  }`}
+              >
+                {s}
+                <span className="ml-1 opacity-60 font-bold">{count}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Body */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-4 py-3">
+      <div className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-4 py-2.5">
         {(mode === 'add' || mode === 'edit') && (
           <NoteEditor
             initial={editingNote}
@@ -95,9 +128,16 @@ export default function NotesPanel({ notes, onAdd, onEdit, onDelete, onNextStage
           <>
             {notes.length === 0
               ? <EmptyState onAdd={() => setMode('add')} />
-              : (
+              : filtered.length === 0
+                ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-center gap-2">
+                    <Icon name="filter_list" className="text-3xl text-[#D0C5B0]" />
+                    <p className="text-xs text-[#8B7E6A] font-medium">此類別沒有筆記。</p>
+                  </div>
+                )
+                : (
                 <div className="space-y-2.5">
-                  {notes.map((note) => (
+                  {filtered.map((note) => (
                     <NoteCard
                       key={note.id}
                       note={note}
@@ -163,6 +203,8 @@ function NoteCard({ note, onEdit, onDelete }: {
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const [confirming, setConfirming] = useState(false);
+
   const stanceClass = note.stance === '支持'
     ? 'bg-[#D8F0C0] border-[#5C8A2E] text-[#2E5C1A]'
     : note.stance === '反對'
@@ -171,34 +213,72 @@ function NoteCard({ note, onEdit, onDelete }: {
 
   return (
     <div
-      className="bg-white/80 border-2 border-[#C19A6B]/50 rounded-2xl p-2.5
+      className={`bg-white/80 border-2 rounded-2xl p-2.5
                  shadow-[0_2px_4px_rgba(91,66,38,0.08)]
-                 hover:border-[#C19A6B] hover:shadow-[0_3px_6px_rgba(91,66,38,0.12)]
-                 transition-all duration-200 cursor-pointer"
-      onClick={onEdit}
+                 transition-all duration-200
+        ${confirming
+          ? 'border-[#D03050]/60 shadow-[0_3px_6px_rgba(208,48,80,0.12)]'
+          : 'border-[#C19A6B]/50 hover:border-[#C19A6B] hover:shadow-[0_3px_6px_rgba(91,66,38,0.12)] cursor-pointer'
+        }`}
+      onClick={confirming ? undefined : onEdit}
     >
       <div className="flex items-start justify-between gap-1.5 mb-1.5">
-        <span className={`flex-shrink-0 text-[10px] font-game font-black px-1.5 py-0.5 rounded-full border ${stanceClass}`}>
+        <span className={`shrink-0 text-[10px] font-game font-black px-1.5 py-0.5 rounded-full border ${stanceClass}`}>
           {note.stance}
         </span>
-        {/* Stop propagation so delete doesn't trigger edit */}
+        {/* Stop propagation so buttons don't trigger card edit */}
         <div className="flex gap-0.5" onClick={(e) => e.stopPropagation()}>
-          <button type="button" onClick={onEdit} aria-label="編輯"
-            className="w-5 h-5 rounded-md flex items-center justify-center
-                       text-[#8B6840] hover:text-[#5A3E22] hover:bg-[#F0E8D0]
-                       transition-colors duration-200 cursor-pointer">
-            <Icon name="edit" className="text-xs" />
-          </button>
-          <button type="button" onClick={onDelete} aria-label="刪除"
-            className="w-5 h-5 rounded-md flex items-center justify-center
-                       text-[#B07070] hover:text-[#D03050] hover:bg-[#FFE0E0]
-                       transition-colors duration-200 cursor-pointer">
-            <Icon name="delete" className="text-xs" />
-          </button>
+          {!confirming && (
+            <>
+              <button type="button" onClick={onEdit} aria-label="編輯"
+                className="w-5 h-5 rounded-md flex items-center justify-center
+                           text-[#8B6840] hover:text-[#5A3E22] hover:bg-[#F0E8D0]
+                           transition-colors duration-200 cursor-pointer">
+                <Icon name="edit" className="text-xs" />
+              </button>
+              <button type="button" onClick={() => setConfirming(true)} aria-label="刪除"
+                className="w-5 h-5 rounded-md flex items-center justify-center
+                           text-[#B07070] hover:text-[#D03050] hover:bg-[#FFE0E0]
+                           transition-colors duration-200 cursor-pointer">
+                <Icon name="delete" className="text-xs" />
+              </button>
+            </>
+          )}
         </div>
       </div>
+
       <p className="text-xs text-[#5A3E22] leading-relaxed line-clamp-3">{note.content}</p>
       <p className="text-[10px] text-[#9B8878] mt-1.5">{note.createdAt}</p>
+
+      {/* Inline delete confirmation */}
+      {confirming && (
+        <div
+          className="mt-2 pt-2 border-t border-[#D03050]/25 flex items-center justify-between gap-2"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <p className="text-[11px] font-game font-bold text-[#D03050]">確定要刪除這則筆記？</p>
+          <div className="flex gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setConfirming(false)}
+              className="px-2 py-1 rounded-lg border-2 border-[#C19A6B]/50
+                         bg-white text-[#7A5232] font-game font-black text-[10px]
+                         hover:bg-[#F0E8D0] transition-all duration-150 cursor-pointer"
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              onClick={onDelete}
+              className="px-2 py-1 rounded-lg border-2 border-[#D03050]
+                         bg-[#FFE0E0] text-[#D03050] font-game font-black text-[10px]
+                         hover:bg-[#D03050] hover:text-white transition-all duration-150 cursor-pointer"
+            >
+              刪除
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

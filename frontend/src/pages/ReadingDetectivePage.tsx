@@ -90,7 +90,7 @@ export default function ReadingDetectivePage({ notes, onAdd, onEdit, onDelete, o
             <div className="flex-shrink-0 flex flex-col justify-center gap-2 py-4 px-1
                             bg-[#EDE0C4]/50 border-r-2 border-[#C19A6B]/35 rounded-l-[16px]">
               <BookmarkTab
-                label={`階段\n總覽`}
+                label={`階段總覽`}
                 active={leftTab === 'overview'}
                 onClick={() => setLeftTab('overview')}
                 color="green"

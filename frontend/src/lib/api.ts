@@ -9,7 +9,10 @@ export interface User {
   group_type: 'experimental' | 'control' | null;
 }
 
-export type ActivityStatus = 'pending' | 'reading' | 'notes' | 'reasoning' | 'completed';
+export type ActivityStatus =
+  | 'pending' | 'reading' | 'notes' | 'reasoning'
+  | 'argumentation' | 'ainotes' | 'reflection' | 'review'
+  | 'completed';
 
 export interface Scenario {
   id: number;
@@ -71,7 +74,41 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+
+  reviewReasoning: (scenarioId: number) =>
+    request<{ submission: ReasoningSubmission | null }>(`/review-reasoning/${scenarioId}`),
+  saveReviewReasoning: (scenarioId: number, data: ReasoningSubmission) =>
+    request<{ ok: boolean }>(`/review-reasoning/${scenarioId}`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  initAiChat: (scenarioId: number) =>
+    request<{ messages: AiMessage[] }>(`/ai-chat/${scenarioId}/init`, { method: 'POST' }),
+  getAiChat: (scenarioId: number) =>
+    request<{ messages: AiMessage[] }>(`/ai-chat/${scenarioId}`),
+  sendAiChat: (scenarioId: number, userMessage: string) =>
+    request<{ assistantMessage: string; messageId: string }>(`/ai-chat/${scenarioId}`, {
+      method: 'POST',
+      body: JSON.stringify({ userMessage }),
+    }),
+
+  initAiReflection: (scenarioId: number) =>
+    request<{ messages: AiMessage[] }>(`/ai-reflection/${scenarioId}/init`, { method: 'POST' }),
+  getAiReflection: (scenarioId: number) =>
+    request<{ messages: AiMessage[] }>(`/ai-reflection/${scenarioId}`),
+  sendAiReflection: (scenarioId: number, userMessage: string) =>
+    request<{ assistantMessage: string; messageId: string }>(`/ai-reflection/${scenarioId}`, {
+      method: 'POST',
+      body: JSON.stringify({ userMessage }),
+    }),
 };
+
+export interface AiMessage {
+  id: string;
+  role: 'user' | 'ai';
+  content: string;
+}
 
 export interface ReasoningSubmission {
   stance: '贊成' | '不贊成';

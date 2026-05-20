@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Icon } from '../ui/woodKit';
-import { api } from '../../lib/api';
+import { api, type ReasoningSubmission } from '../../lib/api';
 
 /* ── Types ───────────────────────────────────────────────── */
 type Stance = '贊成' | '不贊成';
@@ -11,21 +11,33 @@ interface Argument     { id: string; text: string; counters: Counter[]; }
 
 const genId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
+interface Props {
+  scenarioId: number;
+  onNextStage?: () => void;
+  nextStageLabel?: string;
+  loadFn?: (id: number) => Promise<{ submission: ReasoningSubmission | null }>;
+  saveFn?: (id: number, data: ReasoningSubmission) => Promise<{ ok: boolean }>;
+}
+
 /* ── ReasoningChallengePanel ─────────────────────────────── */
-export default function ReasoningChallengePanel({ scenarioId }: { scenarioId: number }) {
+export default function ReasoningChallengePanel({ scenarioId, onNextStage, nextStageLabel, loadFn, saveFn }: Props) {
   const [stance,     setStance]     = useState<Stance | null>(null);
   const [agreeLevel, setAgreeLevel] = useState<number | null>(null);
   const [args,       setArgs]       = useState<Argument[]>([]);
   const [saved,      setSaved]      = useState(false);
   const [saving,     setSaving]     = useState(false);
 
+  const doLoad = loadFn ?? api.reasoning;
+  const doSave = saveFn ?? api.saveReasoning;
+
   useEffect(() => {
-    api.reasoning(scenarioId).then(({ submission }) => {
+    doLoad(scenarioId).then(({ submission }) => {
       if (!submission) return;
       setStance(submission.stance);
       setAgreeLevel(submission.agreeLevel);
       setArgs(submission.args as Argument[]);
     }).catch(console.error);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scenarioId]);
 
   /* ── Q3: arguments ── */
@@ -83,7 +95,7 @@ export default function ReasoningChallengePanel({ scenarioId }: { scenarioId: nu
     if (!stance || !agreeLevel || saving) return;
     setSaving(true);
     try {
-      await api.saveReasoning(scenarioId, { stance, agreeLevel, args });
+      await doSave(scenarioId, { stance, agreeLevel, args });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
@@ -253,8 +265,8 @@ export default function ReasoningChallengePanel({ scenarioId }: { scenarioId: nu
           )}
         </QuestionBlock>
 
-        {/* ── Save ── */}
-        <div className="pb-4">
+        {/* ── Save + Next ── */}
+        <div className="pb-4 space-y-2">
           <button
             type="button"
             onClick={handleSave}
@@ -271,6 +283,20 @@ export default function ReasoningChallengePanel({ scenarioId }: { scenarioId: nu
             <Icon name={saved ? 'check_circle' : saving ? 'hourglass_empty' : 'save'} filled className="text-sm" />
             {saved ? '已儲存！' : saving ? '儲存中…' : '儲存'}
           </button>
+          {onNextStage && (
+            <button
+              type="button"
+              onClick={onNextStage}
+              className="w-full flex items-center justify-center gap-1.5 py-3 rounded-xl
+                         border-2 font-game font-black text-xs sm:text-sm cursor-pointer
+                         bg-linear-to-b from-[#7BC8F0] to-[#3A8FCC] border-[#1E6A9E] text-white
+                         shadow-[0_3px_0_#1E6A9E] hover:shadow-[0_1px_0_#1E6A9E] hover:translate-y-0.5
+                         transition-all duration-300"
+            >
+              <Icon name="forum" filled className="text-sm" />
+              {nextStageLabel ?? '進入 AI 論證擂台'}
+            </button>
+          )}
         </div>
       </div>
     </div>

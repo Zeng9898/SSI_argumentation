@@ -27,7 +27,9 @@ CREATE TABLE IF NOT EXISTS student_activities (
   user_id      INTEGER     NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   scenario_id  INTEGER     NOT NULL REFERENCES scenarios(id),
   status       VARCHAR(20) NOT NULL DEFAULT 'pending'
-                 CHECK (status IN ('pending', 'reading', 'notes', 'reasoning', 'completed')),
+                 CHECK (status IN ('pending', 'reading', 'notes', 'reasoning',
+                                   'argumentation', 'ainotes', 'reflection', 'review',
+                                   'completed')),
   started_at   TIMESTAMPTZ,
   completed_at TIMESTAMPTZ,
   UNIQUE (user_id, scenario_id)
@@ -40,6 +42,48 @@ CREATE TABLE IF NOT EXISTS reading_notes (
   user_id     INTEGER     NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   scenario_id INTEGER     NOT NULL REFERENCES scenarios(id),
   content     TEXT,
+  updated_at  TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (user_id, scenario_id)
+);
+
+-- ── ai_conversations ──────────────────────────────────────────
+-- 每個學生每個議題每個 surface 一筆，記錄 OpenAI conversation ID
+CREATE TABLE IF NOT EXISTS ai_conversations (
+  id                     SERIAL      PRIMARY KEY,
+  openai_conversation_id VARCHAR(64) UNIQUE NOT NULL,
+  user_id                INTEGER     NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  scenario_id            INTEGER     NOT NULL REFERENCES scenarios(id),
+  surface                VARCHAR(20) NOT NULL CHECK (surface IN ('argumentation', 'reflection')),
+  prompt_id              VARCHAR(64),
+  last_response_id       VARCHAR(64),
+  created_at             TIMESTAMPTZ DEFAULT NOW(),
+  updated_at             TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (user_id, scenario_id, surface)
+);
+
+-- ── ai_messages ───────────────────────────────────────────────
+-- 每則對話訊息，供前端顯示與研究分析
+CREATE TABLE IF NOT EXISTS ai_messages (
+  id                     SERIAL      PRIMARY KEY,
+  openai_conversation_id VARCHAR(64) NOT NULL,
+  user_id                INTEGER     NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  scenario_id            INTEGER     NOT NULL REFERENCES scenarios(id),
+  surface                VARCHAR(20) NOT NULL,
+  role                   VARCHAR(10) NOT NULL CHECK (role IN ('user', 'assistant')),
+  content                TEXT        NOT NULL,
+  response_id            VARCHAR(64),
+  created_at             TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ── review_reasoning_submissions ────────────────────────────────
+-- 「回顧與推理挑戰」的二次作答，與第一次 reasoning_submissions 分開存
+CREATE TABLE IF NOT EXISTS review_reasoning_submissions (
+  id          SERIAL     PRIMARY KEY,
+  user_id     INTEGER    NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  scenario_id INTEGER    NOT NULL REFERENCES scenarios(id),
+  stance      VARCHAR(10) CHECK (stance IN ('贊成', '不贊成')),
+  agree_level INTEGER    CHECK (agree_level BETWEEN 1 AND 6),
+  args        JSONB,
   updated_at  TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE (user_id, scenario_id)
 );
