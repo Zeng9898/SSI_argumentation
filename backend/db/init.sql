@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS reading_notes (
 -- 每個學生每個議題每個 surface 一筆，記錄 OpenAI conversation ID
 CREATE TABLE IF NOT EXISTS ai_conversations (
   id                     SERIAL      PRIMARY KEY,
-  openai_conversation_id VARCHAR(64) UNIQUE NOT NULL,
+  openai_conversation_id VARCHAR(64) UNIQUE,
   user_id                INTEGER     NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   scenario_id            INTEGER     NOT NULL REFERENCES scenarios(id),
   surface                VARCHAR(20) NOT NULL CHECK (surface IN ('argumentation', 'reflection')),
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS ai_conversations (
 -- 每則對話訊息，供前端顯示與研究分析
 CREATE TABLE IF NOT EXISTS ai_messages (
   id                     SERIAL      PRIMARY KEY,
-  openai_conversation_id VARCHAR(64) NOT NULL,
+  openai_conversation_id VARCHAR(64),
   user_id                INTEGER     NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   scenario_id            INTEGER     NOT NULL REFERENCES scenarios(id),
   surface                VARCHAR(20) NOT NULL,

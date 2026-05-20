@@ -18,7 +18,7 @@ ALTER TABLE ai_messages     ALTER COLUMN openai_conversation_id DROP NOT NULL;
 -- 3. 新增 ai_conversations（已存在則跳過）
 CREATE TABLE IF NOT EXISTS ai_conversations (
   id                     SERIAL      PRIMARY KEY,
-  openai_conversation_id VARCHAR(64) UNIQUE NOT NULL,
+  openai_conversation_id VARCHAR(64) UNIQUE,
   user_id                INTEGER     NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   scenario_id            INTEGER     NOT NULL REFERENCES scenarios(id),
   surface                VARCHAR(20) NOT NULL CHECK (surface IN ('argumentation', 'reflection')),
@@ -29,10 +29,22 @@ CREATE TABLE IF NOT EXISTS ai_conversations (
   UNIQUE (user_id, scenario_id, surface)
 );
 
--- 4. 新增 ai_messages（已存在則跳過）
+-- 4. 新增 review_reasoning_submissions（已存在則跳過）
+CREATE TABLE IF NOT EXISTS review_reasoning_submissions (
+  id          SERIAL     PRIMARY KEY,
+  user_id     INTEGER    NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  scenario_id INTEGER    NOT NULL REFERENCES scenarios(id),
+  stance      VARCHAR(10) CHECK (stance IN ('贊成', '不贊成')),
+  agree_level INTEGER    CHECK (agree_level BETWEEN 1 AND 6),
+  args        JSONB,
+  updated_at  TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (user_id, scenario_id)
+);
+
+-- 5. 新增 ai_messages（已存在則跳過）
 CREATE TABLE IF NOT EXISTS ai_messages (
   id                     SERIAL      PRIMARY KEY,
-  openai_conversation_id VARCHAR(64) NOT NULL,
+  openai_conversation_id VARCHAR(64),
   user_id                INTEGER     NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   scenario_id            INTEGER     NOT NULL REFERENCES scenarios(id),
   surface                VARCHAR(20) NOT NULL,
