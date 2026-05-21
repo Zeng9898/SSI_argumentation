@@ -53,3 +53,25 @@ CREATE TABLE IF NOT EXISTS ai_messages (
   response_id            VARCHAR(64),
   created_at             TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- 6. 班級層級設定：階段鎖定 + 推理挑戰預設開放狀態
+CREATE TABLE IF NOT EXISTS class_settings (
+  class              VARCHAR(20)  NOT NULL,
+  scenario_id        INTEGER      NOT NULL REFERENCES scenarios(id),
+  allowed_phase      VARCHAR(20)  NOT NULL DEFAULT 'reading'
+    CHECK (allowed_phase IN (
+      'reading','reasoning','argumentation',
+      'ainotes','reflection','review','completed'
+    )),
+  reasoning_editable BOOLEAN      NOT NULL DEFAULT true,
+  updated_at         TIMESTAMPTZ  DEFAULT NOW(),
+  PRIMARY KEY (class, scenario_id)
+);
+
+-- 7. 個人推理挑戰覆蓋：NULL=跟班級走，true=強制開放，false=強制鎖定
+CREATE TABLE IF NOT EXISTS student_restrictions (
+  user_id            INTEGER  NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  scenario_id        INTEGER  NOT NULL REFERENCES scenarios(id),
+  reasoning_override BOOLEAN  DEFAULT NULL,
+  PRIMARY KEY (user_id, scenario_id)
+);

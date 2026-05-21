@@ -8,6 +8,8 @@ const reasoningRoutes       = require('./routes/reasoning');
 const reviewReasoningRoutes = require('./routes/review-reasoning');
 const aiChatRoutes          = require('./routes/ai-chat');
 const aiReflectionRoutes    = require('./routes/ai-reflection');
+const teacherRoutes         = require('./routes/teacher');
+const studentSettingsRoutes = require('./routes/student-settings');
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -26,6 +28,8 @@ app.use('/reasoning',        reasoningRoutes);
 app.use('/review-reasoning', reviewReasoningRoutes);
 app.use('/ai-chat',          aiChatRoutes);
 app.use('/ai-reflection',    aiReflectionRoutes);
+app.use('/teacher',          teacherRoutes);
+app.use('/student-settings', studentSettingsRoutes);
 
 app.listen(PORT, () => {
   console.log(`Backend running on port ${PORT}`);

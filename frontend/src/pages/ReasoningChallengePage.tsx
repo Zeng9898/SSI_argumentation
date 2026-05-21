@@ -14,12 +14,13 @@ type LeftTab = 'overview' | 'notes';
 interface Props {
   notes: Note[];
   scenarioId: number;
+  canEditReasoning?: boolean;
   onBack?: () => void;
   onNextStage?: () => void;
   onLogout?: () => void;
 }
 
-export default function ReasoningChallengePage({ notes, scenarioId, onBack, onNextStage, onLogout }: Props) {
+export default function ReasoningChallengePage({ notes, scenarioId, canEditReasoning = true, onBack, onNextStage, onLogout }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [leftTab, setLeftTab]           = useState<LeftTab>('overview');
 
@@ -111,7 +112,7 @@ export default function ReasoningChallengePage({ notes, scenarioId, onBack, onNe
 
             {/* ── Right: reasoning form ─────────────────── */}
             <div className="w-[42%] sm:w-[44%] flex-shrink-0 flex flex-col min-w-0 overflow-hidden">
-              <ReasoningChallengePanel scenarioId={scenarioId} onNextStage={onNextStage} />
+              <ReasoningChallengePanel scenarioId={scenarioId} onNextStage={onNextStage} readOnly={!canEditReasoning} />
             </div>
           </div>
         </div>

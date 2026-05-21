@@ -15,12 +15,13 @@ interface Props {
   scenarioId: number;
   onNextStage?: () => void;
   nextStageLabel?: string;
+  readOnly?: boolean;
   loadFn?: (id: number) => Promise<{ submission: ReasoningSubmission | null }>;
   saveFn?: (id: number, data: ReasoningSubmission) => Promise<{ ok: boolean }>;
 }
 
 /* ── ReasoningChallengePanel ─────────────────────────────── */
-export default function ReasoningChallengePanel({ scenarioId, onNextStage, nextStageLabel, loadFn, saveFn }: Props) {
+export default function ReasoningChallengePanel({ scenarioId, onNextStage, nextStageLabel, readOnly = false, loadFn, saveFn }: Props) {
   const [stance,     setStance]     = useState<Stance | null>(null);
   const [agreeLevel, setAgreeLevel] = useState<number | null>(null);
   const [args,       setArgs]       = useState<Argument[]>([]);
@@ -113,6 +114,15 @@ export default function ReasoningChallengePanel({ scenarioId, onNextStage, nextS
         <h3 className="font-game font-black text-xs sm:text-sm text-[#5A3E22]">推理挑戰題目</h3>
       </div>
 
+      {/* ReadOnly banner */}
+      {readOnly && (
+        <div className="flex-shrink-0 mx-3 mt-2 flex items-center gap-1.5 px-3 py-2 rounded-xl
+                        bg-[#FFE0E0] border-2 border-[#D03050]/40">
+          <Icon name="lock" filled className="text-sm text-[#D03050]" />
+          <span className="font-game font-bold text-xs text-[#800020]">老師已鎖定此階段，目前無法修改</span>
+        </div>
+      )}
+
       {/* Scrollable form */}
       <div className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-4 py-3 space-y-4">
 
@@ -123,9 +133,11 @@ export default function ReasoningChallengePanel({ scenarioId, onNextStage, nextS
               <button
                 key={s}
                 type="button"
-                onClick={() => setStance(s)}
+                onClick={() => { if (!readOnly) setStance(s); }}
+                disabled={readOnly}
                 className={`flex-1 py-2 rounded-xl border-2 font-game font-black text-xs sm:text-sm
-                           transition-all duration-200 cursor-pointer
+                           transition-all duration-200
+                  ${readOnly ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
                   ${stance === s
                     ? s === '贊成'
                       ? 'bg-[#D8F0C0] border-[#5C8A2E] text-[#2E5C1A] shadow-[0_2px_0_#3F6B1E]'
@@ -147,9 +159,11 @@ export default function ReasoningChallengePanel({ scenarioId, onNextStage, nextS
                 <button
                   key={n}
                   type="button"
-                  onClick={() => setAgreeLevel(n)}
+                  onClick={() => { if (!readOnly) setAgreeLevel(n); }}
+                  disabled={readOnly}
                   className={`flex-1 py-2.5 rounded-xl border-2 font-game font-black text-sm
-                             transition-all duration-200 cursor-pointer
+                             transition-all duration-200
+                    ${readOnly ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
                     ${agreeLevel === n
                       ? 'bg-linear-to-b from-[#F4D58A] to-[#F0B962] border-[#9B5E18] text-[#7A4A18] shadow-[0_2px_0_#9B5E18] scale-105'
                       : 'bg-white/60 border-[#C19A6B]/40 text-[#8B7E6A] hover:border-[#C19A6B] hover:bg-white/80'
@@ -177,15 +191,17 @@ export default function ReasoningChallengePanel({ scenarioId, onNextStage, nextS
                   value={arg.text}
                   onChange={(e) => updateArg(arg.id, e.target.value)}
                   placeholder="輸入你的論點..."
-                  className="flex-1 px-3 py-2 rounded-xl border-2 border-[#C19A6B]/50 bg-white/80
+                  readOnly={readOnly}
+                  className={`flex-1 px-3 py-2 rounded-xl border-2 border-[#C19A6B]/50 bg-white/80
                              text-xs sm:text-sm text-[#5A3E22] placeholder-[#B0A090]
                              focus:outline-none focus:border-[#D08B2E] focus:bg-white
-                             transition-colors duration-200"
+                             transition-colors duration-200
+                             ${readOnly ? 'opacity-60 cursor-not-allowed' : ''}`}
                 />
-                <DeleteBtn onClick={() => deleteArg(arg.id)} />
+                {!readOnly && <DeleteBtn onClick={() => deleteArg(arg.id)} />}
               </div>
             ))}
-            <AddBtn onClick={addArg} label="新增論點" />
+            {!readOnly && <AddBtn onClick={addArg} label="新增論點" />}
           </div>
         </QuestionBlock>
 
@@ -211,15 +227,17 @@ export default function ReasoningChallengePanel({ scenarioId, onNextStage, nextS
                               ? `針對「${arg.text}」，其他人可能會反駁...`
                               : '其他人可能會反駁...'
                           }
-                          className="flex-1 px-3 py-2 rounded-xl border-2 border-[#C19A6B]/50 bg-white/80
+                          readOnly={readOnly}
+                          className={`flex-1 px-3 py-2 rounded-xl border-2 border-[#C19A6B]/50 bg-white/80
                                      text-xs sm:text-sm text-[#5A3E22] placeholder-[#B0A090]
                                      focus:outline-none focus:border-[#D08B2E] focus:bg-white
-                                     transition-colors duration-200"
+                                     transition-colors duration-200
+                                     ${readOnly ? 'opacity-60 cursor-not-allowed' : ''}`}
                         />
-                        <DeleteBtn onClick={() => deleteCounter(arg.id, c.id)} />
+                        {!readOnly && <DeleteBtn onClick={() => deleteCounter(arg.id, c.id)} />}
                       </div>
                     ))}
-                    <AddBtn onClick={() => addCounter(arg.id)} label="新增反方論點" small />
+                    {!readOnly && <AddBtn onClick={() => addCounter(arg.id)} label="新增反方論點" small />}
                   </div>
                 </div>
               ))}
@@ -249,15 +267,17 @@ export default function ReasoningChallengePanel({ scenarioId, onNextStage, nextS
                               ? `針對「${counter.text}」，你會想要怎麼回應...`
                               : '你會想要怎麼回應...'
                           }
-                          className="flex-1 px-3 py-2 rounded-xl border-2 border-[#C19A6B]/50 bg-white/80
+                          readOnly={readOnly}
+                          className={`flex-1 px-3 py-2 rounded-xl border-2 border-[#C19A6B]/50 bg-white/80
                                      text-xs sm:text-sm text-[#5A3E22] placeholder-[#B0A090]
                                      focus:outline-none focus:border-[#D08B2E] focus:bg-white
-                                     transition-colors duration-200"
+                                     transition-colors duration-200
+                                     ${readOnly ? 'opacity-60 cursor-not-allowed' : ''}`}
                         />
-                        <DeleteBtn onClick={() => deleteResponse(argId, counter.id, r.id)} />
+                        {!readOnly && <DeleteBtn onClick={() => deleteResponse(argId, counter.id, r.id)} />}
                       </div>
                     ))}
-                    <AddBtn onClick={() => addResponse(argId, counter.id)} label="新增回應" small />
+                    {!readOnly && <AddBtn onClick={() => addResponse(argId, counter.id)} label="新增回應" small />}
                   </div>
                 </div>
               ))}
@@ -270,7 +290,7 @@ export default function ReasoningChallengePanel({ scenarioId, onNextStage, nextS
           <button
             type="button"
             onClick={handleSave}
-            disabled={saving || !stance || !agreeLevel}
+            disabled={readOnly || saving || !stance || !agreeLevel}
             className={`w-full flex items-center justify-center gap-1.5 py-3 rounded-xl
                        border-2 font-game font-black text-xs sm:text-sm
                        transition-all duration-300 cursor-pointer

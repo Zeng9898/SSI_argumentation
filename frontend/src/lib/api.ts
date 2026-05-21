@@ -102,6 +102,26 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ userMessage }),
     }),
+
+  // ── Teacher ────────────────────────────────────────────────
+  teacherClasses: (scenarioId: number) =>
+    request<{ classes: ClassSetting[] }>(`/teacher/classes?scenario_id=${scenarioId}`),
+  teacherUpdateSettings: (data: { class: string; scenario_id: number; allowed_phase?: Phase; reasoning_editable?: boolean }) =>
+    request<{ settings: ClassSetting }>('/teacher/settings', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  teacherStudents: (cls: string, scenarioId: number) =>
+    request<{ students: TeacherStudent[] }>(`/teacher/students?class=${encodeURIComponent(cls)}&scenario_id=${scenarioId}`),
+  teacherUpdateRestriction: (userId: number, scenarioId: number, reasoning_override: boolean | null) =>
+    request<{ ok: boolean; reasoning_override: boolean | null }>(`/teacher/students/${userId}/restriction`, {
+      method: 'PUT',
+      body: JSON.stringify({ scenario_id: scenarioId, reasoning_override }),
+    }),
+
+  // ── Student settings ───────────────────────────────────────
+  studentSettings: (scenarioId: number) =>
+    request<StudentSettings>(`/student-settings?scenario_id=${scenarioId}`),
 };
 
 export interface AiMessage {
@@ -114,4 +134,28 @@ export interface ReasoningSubmission {
   stance: '贊成' | '不贊成';
   agreeLevel: number;
   args: object[];
+}
+
+export type Phase =
+  | 'reading' | 'reasoning' | 'argumentation'
+  | 'ainotes' | 'reflection' | 'review' | 'completed';
+
+export interface ClassSetting {
+  class: string;
+  allowed_phase: Phase;
+  reasoning_editable: boolean;
+}
+
+export interface TeacherStudent {
+  id: number;
+  name: string;
+  account: string;
+  seat_number: number | null;
+  current_phase: string;
+  reasoning_override: boolean | null;
+}
+
+export interface StudentSettings {
+  allowed_phase: Phase;
+  can_edit_reasoning: boolean;
 }

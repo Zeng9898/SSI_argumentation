@@ -37,6 +37,19 @@ router.post('/:scenarioId', authMiddleware, async (req, res) => {
   }
 
   try {
+    // 檢查學生是否被鎖定（班級預設 + 個人覆蓋）
+    const lockCheck = await pool.query(
+      `SELECT COALESCE(sr.reasoning_override, COALESCE(cs.reasoning_editable, true)) AS can_edit
+       FROM users u
+       LEFT JOIN class_settings cs ON cs.class = u.class AND cs.scenario_id = $2
+       LEFT JOIN student_restrictions sr ON sr.user_id = u.id AND sr.scenario_id = $2
+       WHERE u.id = $1`,
+      [req.user.id, scenarioId]
+    );
+    if (lockCheck.rows[0]?.can_edit === false) {
+      return res.status(403).json({ error: '教師已鎖定推理挑戰，無法修改' });
+    }
+
     await pool.query(
       `INSERT INTO reasoning_submissions (user_id, scenario_id, stance, agree_level, args, updated_at)
        VALUES ($1, $2, $3, $4, $5, NOW())
