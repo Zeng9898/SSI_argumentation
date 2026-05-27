@@ -75,3 +75,16 @@ CREATE TABLE IF NOT EXISTS student_restrictions (
   reasoning_override BOOLEAN  DEFAULT NULL,
   PRIMARY KEY (user_id, scenario_id)
 );
+
+-- 8. 新增 scenarios.opening_message（AI 論證擂台開場白，依議題不同）
+ALTER TABLE scenarios ADD COLUMN IF NOT EXISTS opening_message TEXT;
+
+-- 補上議題一的開場白（已存在的資料列）
+UPDATE scenarios
+SET opening_message = '你可以先說說看，你比較贊成還是不贊成讓生成式AI取代原本的文字生產工作？'
+WHERE title = '討論議題一：生成式AI與文字創作' AND opening_message IS NULL;
+
+-- 新增議題二（已存在則跳過）
+INSERT INTO scenarios (title, is_active, opening_message)
+VALUES ('討論議題二：生成式AI與影像創作', true, '你可以先說說看，你比較贊成還是不贊成讓生成式AI取代原本的影像創作工作？')
+ON CONFLICT DO NOTHING;

@@ -20,9 +20,10 @@ interface Props {
   onBack?: () => void;
   onNextStage?: () => void;
   onLogout?: () => void;
+  readOnly?: boolean;
 }
 
-export default function AIArgumentationPage({ notes, scenarioId, messages, onMessagesChange, onBack, onNextStage, onLogout }: Props) {
+export default function AIArgumentationPage({ notes, scenarioId, messages, onMessagesChange, onBack, onNextStage, onLogout, readOnly }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [leftTab, setLeftTab]           = useState<LeftTab>('overview');
 
@@ -115,14 +116,14 @@ export default function AIArgumentationPage({ notes, scenarioId, messages, onMes
             {/* ── Left content ──────────────────────────── */}
             <div className="flex-1 min-w-0 flex flex-col overflow-hidden
                             border-r-2 border-[#C19A6B]/25">
-              {leftTab === 'overview' && <StageOverviewTab currentStage={3} onNextStage={onNextStage} nextStageLabel="進入 AI 對話筆記整理" />}
+              {leftTab === 'overview' && <StageOverviewTab currentStage={3} scenarioId={scenarioId} onNextStage={onNextStage} nextStageLabel="進入 AI 對話筆記整理" />}
               {leftTab === 'notes'    && <ReadingNotesTab notes={notes} />}
               {leftTab === 'myargs'   && <PreviousArgumentsTab scenarioId={scenarioId} />}
             </div>
 
             {/* ── Right: AI chat panel ─────────────────── */}
             <div className="w-[42%] sm:w-[44%] flex-shrink-0 flex flex-col min-w-0 overflow-hidden">
-              <AIChatPanel scenarioId={scenarioId} messages={messages} onMessagesChange={onMessagesChange} />
+              <AIChatPanel scenarioId={scenarioId} messages={messages} onMessagesChange={onMessagesChange} readOnly={readOnly} />
             </div>
           </div>
         </div>

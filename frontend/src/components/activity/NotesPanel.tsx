@@ -18,11 +18,12 @@ interface NotesPanelProps {
   onEdit:   (id: string, data: { stance: Stance; content: string }) => void;
   onDelete: (id: string) => void;
   onNextStage?: () => void;
+  readOnly?: boolean;
 }
 
 const STANCES: Stance[] = ['支持', '反對', '無'];
 
-export default function NotesPanel({ notes, onAdd, onEdit, onDelete, onNextStage }: NotesPanelProps) {
+export default function NotesPanel({ notes, onAdd, onEdit, onDelete, onNextStage, readOnly }: NotesPanelProps) {
   const [mode, setMode]               = useState<PanelMode>('list');
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [filter, setFilter]           = useState<Stance | null>(null);
@@ -59,7 +60,19 @@ export default function NotesPanel({ notes, onAdd, onEdit, onDelete, onNextStage
             </span>
           )}
         </div>
-        {mode === 'list' ? (
+        {mode !== 'list' ? (
+          <button
+            type="button"
+            onClick={cancelEdit}
+            className="flex-shrink-0 flex items-center gap-1 px-2 py-1.5 rounded-xl
+                       bg-white border-2 border-[#8B5E3C] text-[#7A4A18]
+                       font-game font-black text-[10px] sm:text-xs
+                       hover:bg-[#FFF8E7] transition-all duration-200 cursor-pointer"
+          >
+            <Icon name="close" filled className="text-sm" />
+            取消
+          </button>
+        ) : !readOnly ? (
           <button
             type="button"
             onClick={() => setMode('add')}
@@ -73,19 +86,7 @@ export default function NotesPanel({ notes, onAdd, onEdit, onDelete, onNextStage
             <Icon name="add" filled className="text-sm" />
             新增
           </button>
-        ) : (
-          <button
-            type="button"
-            onClick={cancelEdit}
-            className="flex-shrink-0 flex items-center gap-1 px-2 py-1.5 rounded-xl
-                       bg-white border-2 border-[#8B5E3C] text-[#7A4A18]
-                       font-game font-black text-[10px] sm:text-xs
-                       hover:bg-[#FFF8E7] transition-all duration-200 cursor-pointer"
-          >
-            <Icon name="close" filled className="text-sm" />
-            取消
-          </button>
-        )}
+        ) : null}
       </div>
 
       {/* Stance tab bar — only in list mode with notes */}
@@ -127,7 +128,7 @@ export default function NotesPanel({ notes, onAdd, onEdit, onDelete, onNextStage
         {mode === 'list' && (
           <>
             {notes.length === 0
-              ? <EmptyState onAdd={() => setMode('add')} />
+              ? <EmptyState onAdd={() => setMode('add')} readOnly={readOnly} />
               : filtered.length === 0
                 ? (
                   <div className="flex flex-col items-center justify-center py-8 text-center gap-2">
@@ -143,6 +144,7 @@ export default function NotesPanel({ notes, onAdd, onEdit, onDelete, onNextStage
                       note={note}
                       onEdit={() => openEdit(note)}
                       onDelete={() => onDelete(note.id)}
+                      readOnly={readOnly}
                     />
                   ))}
                 </div>
@@ -173,35 +175,38 @@ export default function NotesPanel({ notes, onAdd, onEdit, onDelete, onNextStage
 }
 
 /* ── EmptyState ───────────────────────────────────────── */
-function EmptyState({ onAdd }: { onAdd: () => void }) {
+function EmptyState({ onAdd, readOnly }: { onAdd: () => void; readOnly?: boolean }) {
   return (
     <div className="flex flex-col items-center justify-center py-8 px-2 text-center gap-3">
       <span className="material-symbols-rounded filled text-4xl text-[#D0C5B0]">note_add</span>
       <p className="text-xs text-[#8B7E6A] font-medium leading-snug">
         還沒有筆記喔！<br />閱讀時記下你的想法吧。
       </p>
-      <button
-        type="button"
-        onClick={onAdd}
-        className="flex items-center gap-1 px-3 py-2 rounded-xl
-                   bg-linear-to-b from-[#F4D58A] to-[#F0B962]
-                   border-2 border-[#9B5E18] text-[#7A4A18]
-                   font-game font-black text-xs
-                   shadow-[0_2px_0_#9B5E18] hover:shadow-none hover:translate-y-0.5
-                   transition-all duration-200 cursor-pointer"
-      >
-        <Icon name="add" filled className="text-sm" />
-        新增第一則筆記
-      </button>
+      {!readOnly && (
+        <button
+          type="button"
+          onClick={onAdd}
+          className="flex items-center gap-1 px-3 py-2 rounded-xl
+                     bg-linear-to-b from-[#F4D58A] to-[#F0B962]
+                     border-2 border-[#9B5E18] text-[#7A4A18]
+                     font-game font-black text-xs
+                     shadow-[0_2px_0_#9B5E18] hover:shadow-none hover:translate-y-0.5
+                     transition-all duration-200 cursor-pointer"
+        >
+          <Icon name="add" filled className="text-sm" />
+          新增第一則筆記
+        </button>
+      )}
     </div>
   );
 }
 
 /* ── NoteCard ─────────────────────────────────────────── */
-function NoteCard({ note, onEdit, onDelete }: {
+function NoteCard({ note, onEdit, onDelete, readOnly }: {
   note: { id: string; stance: Stance; content: string; createdAt: string };
   onEdit: () => void;
   onDelete: () => void;
+  readOnly?: boolean;
 }) {
   const [confirming, setConfirming] = useState(false);
 
@@ -220,7 +225,7 @@ function NoteCard({ note, onEdit, onDelete }: {
           ? 'border-[#D03050]/60 shadow-[0_3px_6px_rgba(208,48,80,0.12)]'
           : 'border-[#C19A6B]/50 hover:border-[#C19A6B] hover:shadow-[0_3px_6px_rgba(91,66,38,0.12)] cursor-pointer'
         }`}
-      onClick={confirming ? undefined : onEdit}
+      onClick={confirming || readOnly ? undefined : onEdit}
     >
       <div className="flex items-start justify-between gap-1.5 mb-1.5">
         <span className={`shrink-0 text-[10px] font-game font-black px-1.5 py-0.5 rounded-full border ${stanceClass}`}>
@@ -228,7 +233,7 @@ function NoteCard({ note, onEdit, onDelete }: {
         </span>
         {/* Stop propagation so buttons don't trigger card edit */}
         <div className="flex gap-0.5" onClick={(e) => e.stopPropagation()}>
-          {!confirming && (
+          {!confirming && !readOnly && (
             <>
               <button type="button" onClick={onEdit} aria-label="編輯"
                 className="w-5 h-5 rounded-md flex items-center justify-center

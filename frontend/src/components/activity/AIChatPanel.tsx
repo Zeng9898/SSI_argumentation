@@ -20,9 +20,10 @@ interface Props {
   scenarioId: number;
   messages?: Message[];
   onMessagesChange?: (messages: Message[]) => void;
+  readOnly?: boolean;
 }
 
-export default function AIChatPanel({ scenarioId, messages: externalMessages, onMessagesChange }: Props) {
+export default function AIChatPanel({ scenarioId, messages: externalMessages, onMessagesChange, readOnly }: Props) {
   const [internalMessages, setInternalMessages] = useState<Message[]>([INITIAL_CHAT_MESSAGE]);
   const messages = externalMessages ?? internalMessages;
   const setMessages = onMessagesChange ?? setInternalMessages;
@@ -122,7 +123,7 @@ export default function AIChatPanel({ scenarioId, messages: externalMessages, on
       </div>
 
       {/* Input area */}
-      <div className="shrink-0 px-3 sm:px-4 py-2.5 border-t-2 border-[#C19A6B]/25 bg-[#EDE0C4]/30">
+      {!readOnly && <div className="shrink-0 px-3 sm:px-4 py-2.5 border-t-2 border-[#C19A6B]/25 bg-[#EDE0C4]/30">
         <div className="flex items-end gap-2">
           <textarea
             value={input}
@@ -158,7 +159,7 @@ export default function AIChatPanel({ scenarioId, messages: externalMessages, on
             <Icon name="send" filled className="text-base" />
           </button>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

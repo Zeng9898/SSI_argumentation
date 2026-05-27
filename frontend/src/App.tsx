@@ -12,6 +12,7 @@ import type { Note, Stance } from './components/activity/NotesPanel';
 import { type Message, INITIAL_CHAT_MESSAGE } from './components/activity/AIChatPanel';
 import { useAuth } from './contexts/AuthContext';
 import { api, type Phase, type StudentSettings } from './lib/api';
+import { isScenarioLocked } from './lib/scenarioContent';
 
 type Page = 'login' | 'student' | 'reading' | 'reasoning' | 'argumentation' | 'ainotes' | 'reflection' | 'review';
 
@@ -149,6 +150,7 @@ export default function App() {
   // ── Student pages ────────────────────────────────────────
   const scenarioId = currentScenarioId ?? 1;
   const canEditReasoning = studentSettings?.can_edit_reasoning ?? true;
+  const isLocked = isScenarioLocked(scenarioId);
 
   if (page === 'review') return (
     <>
@@ -156,6 +158,7 @@ export default function App() {
       <ReviewReasoningPage
         notes={notes} onAdd={addNote} onEdit={editNote} onDelete={deleteNote}
         scenarioId={scenarioId} onBack={() => setPage('reflection')} onLogout={handleLogout}
+        readOnly={isLocked}
       />
     </>
   );
@@ -170,6 +173,7 @@ export default function App() {
         onBack={() => setPage('ainotes')}
         onNextStage={guardedNext('review', 'review')}
         onLogout={handleLogout}
+        readOnly={isLocked}
       />
     </>
   );
@@ -183,6 +187,7 @@ export default function App() {
         onBack={() => setPage('argumentation')}
         onNextStage={guardedNext('reflection', 'reflection')}
         onLogout={handleLogout}
+        readOnly={isLocked}
       />
     </>
   );
@@ -196,6 +201,7 @@ export default function App() {
         onBack={() => setPage('reasoning')}
         onNextStage={guardedNext('ainotes', 'ainotes')}
         onLogout={handleLogout}
+        readOnly={isLocked}
       />
     </>
   );
@@ -206,6 +212,7 @@ export default function App() {
       <ReasoningChallengePage
         notes={notes} scenarioId={scenarioId}
         canEditReasoning={canEditReasoning}
+        readOnly={isLocked}
         onBack={() => setPage('reading')}
         onNextStage={guardedNext('argumentation', 'argumentation')}
         onLogout={handleLogout}
@@ -218,6 +225,8 @@ export default function App() {
       {PhaseToast}
       <ReadingDetectivePage
         notes={notes} onAdd={addNote} onEdit={editNote} onDelete={deleteNote}
+        scenarioId={scenarioId}
+        readOnly={isLocked}
         onBack={() => setPage('student')}
         onNextStage={guardedNext('reasoning', 'reasoning')}
         onLogout={handleLogout}

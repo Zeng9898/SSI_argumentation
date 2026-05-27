@@ -13,7 +13,15 @@ const PROMPT_BY_GROUP = {
   control:      process.env.OPENAI_PROMPT_ID_ARGUMENTATION_CONTROL,
 };
 
-const OPENING_MESSAGE = '你可以先說說看，你比較贊成還是不贊成讓生成式AI取代原本的文字生產工作？';
+const FALLBACK_OPENING_MESSAGE = '你可以先說說看，你比較贊成還是不贊成這個議題的主張？';
+
+async function getOpeningMessage(scenarioId) {
+  const { rows } = await pool.query(
+    'SELECT opening_message FROM scenarios WHERE id = $1',
+    [scenarioId]
+  );
+  return rows[0]?.opening_message ?? FALLBACK_OPENING_MESSAGE;
+}
 
 // 查詢某個 user/scenario/surface 的所有訊息
 async function fetchMessages(userId, scenarioId, surface) {
@@ -46,6 +54,8 @@ router.post('/:scenarioId/init', auth, async (req, res) => {
     }
 
     // 全新對話：建立 ai_conversations 並存入開場白
+    const openingMessage = await getOpeningMessage(scenarioId);
+
     await pool.query(
       `INSERT INTO ai_conversations (user_id, scenario_id, surface)
        VALUES ($1, $2, 'argumentation')`,
@@ -56,11 +66,11 @@ router.post('/:scenarioId/init', auth, async (req, res) => {
       `INSERT INTO ai_messages (user_id, scenario_id, surface, role, content)
        VALUES ($1, $2, 'argumentation', 'assistant', $3)
        RETURNING id`,
-      [req.user.id, scenarioId, OPENING_MESSAGE]
+      [req.user.id, scenarioId, openingMessage]
     );
 
     res.json({
-      messages: [{ id: String(saved.rows[0].id), role: 'ai', content: OPENING_MESSAGE }],
+      messages: [{ id: String(saved.rows[0].id), role: 'ai', content: openingMessage }],
     });
   } catch (err) {
     console.error('[POST /ai-chat/init]', err);

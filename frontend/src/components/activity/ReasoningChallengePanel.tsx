@@ -11,8 +11,11 @@ interface Argument     { id: string; text: string; counters: Counter[]; }
 
 const genId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
+
 interface Props {
   scenarioId: number;
+  q1Text?: string;
+  q2Text?: string;
   onNextStage?: () => void;
   nextStageLabel?: string;
   readOnly?: boolean;
@@ -21,7 +24,11 @@ interface Props {
 }
 
 /* ── ReasoningChallengePanel ─────────────────────────────── */
-export default function ReasoningChallengePanel({ scenarioId, onNextStage, nextStageLabel, readOnly = false, loadFn, saveFn }: Props) {
+export default function ReasoningChallengePanel({
+  scenarioId, q1Text, q2Text, onNextStage, nextStageLabel, readOnly = false, loadFn, saveFn,
+}: Props) {
+  const effectiveQ1 = q1Text ?? '你贊成或不贊成「在寫作或工作中，讓生成式 AI 取代文字生產工作」？';
+  const effectiveQ2 = q2Text ?? '你對於「在寫作或工作中，讓生成式 AI 取代文字生產工作」的贊成程度（1 代表非常不贊成，6 代表非常贊成）。';
   const [stance,     setStance]     = useState<Stance | null>(null);
   const [agreeLevel, setAgreeLevel] = useState<number | null>(null);
   const [args,       setArgs]       = useState<Argument[]>([]);
@@ -127,7 +134,7 @@ export default function ReasoningChallengePanel({ scenarioId, onNextStage, nextS
       <div className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-4 py-3 space-y-4">
 
         {/* ── Q1 ── */}
-        <QuestionBlock num={1} question="你贊成或不贊成「在寫作或工作中，讓生成式 AI 取代文字生產工作」？">
+        <QuestionBlock num={1} question={effectiveQ1}>
           <div className="flex gap-2">
             {(['贊成', '不贊成'] as Stance[]).map((s) => (
               <button
@@ -152,7 +159,7 @@ export default function ReasoningChallengePanel({ scenarioId, onNextStage, nextS
         </QuestionBlock>
 
         {/* ── Q2 ── */}
-        <QuestionBlock num={2} question="你對於「在寫作或工作中，讓生成式 AI 取代文字生產工作」的贊成程度（1 代表非常不贊成，6 代表非常贊成）。">
+        <QuestionBlock num={2} question={effectiveQ2}>
           <div className="space-y-1.5">
             <div className="flex gap-1 sm:gap-1.5">
               {[1, 2, 3, 4, 5, 6].map((n) => (

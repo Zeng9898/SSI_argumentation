@@ -7,6 +7,7 @@ import PreviousArgumentsTab from '../components/activity/PreviousArgumentsTab';
 import ReasoningChallengePanel from '../components/activity/ReasoningChallengePanel';
 import type { Note, Stance } from '../components/activity/NotesPanel';
 import { api } from '../lib/api';
+import { getScenarioContent } from '../lib/scenarioContent';
 import bgImg from '../assets/backgrounds/bg_chiheisen_green.jpg';
 import mascotImg from '../assets/illustrations/scilens_mascot.png';
 import settingsIcon from '../assets/icons/settings_wood.png';
@@ -21,10 +22,11 @@ interface Props {
   scenarioId: number;
   onBack?: () => void;
   onLogout?: () => void;
+  readOnly?: boolean;
 }
 
 export default function ReviewReasoningPage({
-  notes, onAdd, onEdit, onDelete, scenarioId, onBack, onLogout,
+  notes, onAdd, onEdit, onDelete, scenarioId, onBack, onLogout, readOnly,
 }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [leftTab, setLeftTab]           = useState<LeftTab>('overview');
@@ -101,8 +103,8 @@ export default function ReviewReasoningPage({
 
             {/* ── Left content ──────────────────────────── */}
             <div className="flex-1 min-w-0 flex flex-col overflow-hidden border-r-2 border-[#C19A6B]/25">
-              {leftTab === 'overview' && <StageOverviewTab currentStage={5} />}
-              {leftTab === 'notes'    && <NotesPanel notes={notes} onAdd={onAdd} onEdit={onEdit} onDelete={onDelete} />}
+              {leftTab === 'overview' && <StageOverviewTab currentStage={5} scenarioId={scenarioId} />}
+              {leftTab === 'notes'    && <NotesPanel notes={notes} onAdd={onAdd} onEdit={onEdit} onDelete={onDelete} readOnly={readOnly} />}
               {leftTab === 'myargs'   && <PreviousArgumentsTab scenarioId={scenarioId} />}
             </div>
 
@@ -110,9 +112,12 @@ export default function ReviewReasoningPage({
             <div className="w-[42%] sm:w-[44%] shrink-0 flex flex-col min-w-0 overflow-hidden">
               <ReasoningChallengePanel
                 scenarioId={scenarioId}
+                q1Text={getScenarioContent(scenarioId).q1Text}
+                q2Text={getScenarioContent(scenarioId).q2Text}
                 loadFn={api.reviewReasoning}
                 saveFn={api.saveReviewReasoning}
                 nextStageLabel="完成回顧"
+                readOnly={readOnly}
               />
             </div>
           </div>

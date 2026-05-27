@@ -24,10 +24,11 @@ interface Props {
   onBack?: () => void;
   onNextStage?: () => void;
   onLogout?: () => void;
+  readOnly?: boolean;
 }
 
 export default function AINotesPage({
-  notes, onAdd, onEdit, onDelete, scenarioId, chatMessages, onBack, onNextStage, onLogout,
+  notes, onAdd, onEdit, onDelete, scenarioId, chatMessages, onBack, onNextStage, onLogout, readOnly,
 }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [leftTab, setLeftTab]           = useState<LeftTab>('overview');
@@ -121,13 +122,14 @@ export default function AINotesPage({
             {/* ── Left content ──────────────────────────── */}
             <div className="flex-1 min-w-0 flex flex-col overflow-hidden
                             border-r-2 border-[#C19A6B]/25">
-              {leftTab === 'overview' && <StageOverviewTab currentStage={3.1} onNextStage={onNextStage} nextStageLabel="進入反思整理站" />}
+              {leftTab === 'overview' && <StageOverviewTab currentStage={3.1} scenarioId={scenarioId} onNextStage={onNextStage} nextStageLabel="進入反思整理站" />}
               {leftTab === 'notes'    && (
                 <NotesPanel
                   notes={notes}
                   onAdd={onAdd}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  readOnly={readOnly}
                 />
               )}
               {leftTab === 'myargs'   && <PreviousArgumentsTab scenarioId={scenarioId} />}

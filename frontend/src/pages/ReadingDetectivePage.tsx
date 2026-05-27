@@ -7,6 +7,8 @@ import NotesPanel, { type Note, type Stance } from '../components/activity/Notes
 
 interface Props {
   notes: Note[];
+  scenarioId?: number;
+  readOnly?: boolean;
   onAdd:    (data: { stance: Stance; content: string }) => void;
   onEdit:   (id: string, data: { stance: Stance; content: string }) => void;
   onDelete: (id: string) => void;
@@ -20,7 +22,7 @@ import settingsIcon from '../assets/icons/settings_wood.png';
 
 type LeftTab = 'overview' | 'news';
 
-export default function ReadingDetectivePage({ notes, onAdd, onEdit, onDelete, onBack, onNextStage, onLogout }: Props) {
+export default function ReadingDetectivePage({ notes, scenarioId = 1, readOnly, onAdd, onEdit, onDelete, onBack, onNextStage, onLogout }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [leftTab, setLeftTab]           = useState<LeftTab>('overview');
 
@@ -106,13 +108,13 @@ export default function ReadingDetectivePage({ notes, onAdd, onEdit, onDelete, o
             {/* ── Left content ──────────────────────────── */}
             <div className="flex-1 min-w-0 flex flex-col overflow-hidden
                             border-r-2 border-[#C19A6B]/25">
-              {leftTab === 'overview' && <StageOverviewTab />}
-              {leftTab === 'news'     && <NewsReaderTab />}
+              {leftTab === 'overview' && <StageOverviewTab scenarioId={scenarioId} />}
+              {leftTab === 'news'     && <NewsReaderTab scenarioId={scenarioId} />}
             </div>
 
             {/* ── Right notes panel ─────────────────────── */}
             <div className="w-[42%] sm:w-[44%] flex-shrink-0 flex flex-col min-w-0 overflow-hidden">
-              <NotesPanel notes={notes} onAdd={onAdd} onEdit={onEdit} onDelete={onDelete} onNextStage={onNextStage} />
+              <NotesPanel notes={notes} onAdd={onAdd} onEdit={onEdit} onDelete={onDelete} onNextStage={onNextStage} readOnly={readOnly} />
             </div>
           </div>
         </div>

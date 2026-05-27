@@ -5,6 +5,7 @@ import StageOverviewTab from '../components/activity/StageOverviewTab';
 import ReadingNotesTab from '../components/activity/ReadingNotesTab';
 import type { Note } from '../components/activity/NotesPanel';
 import ReasoningChallengePanel from '../components/activity/ReasoningChallengePanel';
+import { getScenarioContent } from '../lib/scenarioContent';
 import bgImg from '../assets/backgrounds/bg_chiheisen_green.jpg';
 import mascotImg from '../assets/illustrations/scilens_mascot.png';
 import settingsIcon from '../assets/icons/settings_wood.png';
@@ -15,12 +16,13 @@ interface Props {
   notes: Note[];
   scenarioId: number;
   canEditReasoning?: boolean;
+  readOnly?: boolean;
   onBack?: () => void;
   onNextStage?: () => void;
   onLogout?: () => void;
 }
 
-export default function ReasoningChallengePage({ notes, scenarioId, canEditReasoning = true, onBack, onNextStage, onLogout }: Props) {
+export default function ReasoningChallengePage({ notes, scenarioId, canEditReasoning = true, readOnly, onBack, onNextStage, onLogout }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [leftTab, setLeftTab]           = useState<LeftTab>('overview');
 
@@ -106,13 +108,19 @@ export default function ReasoningChallengePage({ notes, scenarioId, canEditReaso
             {/* ── Left content ──────────────────────────── */}
             <div className="flex-1 min-w-0 flex flex-col overflow-hidden
                             border-r-2 border-[#C19A6B]/25">
-              {leftTab === 'overview' && <StageOverviewTab currentStage={2} />}
+              {leftTab === 'overview' && <StageOverviewTab currentStage={2} scenarioId={scenarioId} />}
               {leftTab === 'notes'    && <ReadingNotesTab notes={notes} />}
             </div>
 
             {/* ── Right: reasoning form ─────────────────── */}
             <div className="w-[42%] sm:w-[44%] flex-shrink-0 flex flex-col min-w-0 overflow-hidden">
-              <ReasoningChallengePanel scenarioId={scenarioId} onNextStage={onNextStage} readOnly={!canEditReasoning} />
+              <ReasoningChallengePanel
+                scenarioId={scenarioId}
+                q1Text={getScenarioContent(scenarioId).q1Text}
+                q2Text={getScenarioContent(scenarioId).q2Text}
+                onNextStage={onNextStage}
+                readOnly={readOnly || !canEditReasoning}
+              />
             </div>
           </div>
         </div>

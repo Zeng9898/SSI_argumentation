@@ -14,10 +14,11 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- ── scenarios ─────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS scenarios (
-  id         SERIAL       PRIMARY KEY,
-  title      VARCHAR(255) NOT NULL,
-  is_active  BOOLEAN      DEFAULT true,
-  created_at TIMESTAMPTZ  DEFAULT NOW()
+  id               SERIAL       PRIMARY KEY,
+  title            VARCHAR(255) NOT NULL,
+  is_active        BOOLEAN      DEFAULT true,
+  opening_message  TEXT,
+  created_at       TIMESTAMPTZ  DEFAULT NOW()
 );
 
 -- ── student_activities ────────────────────────────────────────

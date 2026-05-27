@@ -32,12 +32,13 @@ interface Props {
   onBack?: () => void;
   onNextStage?: () => void;
   onLogout?: () => void;
+  readOnly?: boolean;
 }
 
 export default function ReflectionPage({
   notes, onAdd, onEdit, onDelete, scenarioId,
   messages, onMessagesChange,
-  onBack, onNextStage, onLogout,
+  onBack, onNextStage, onLogout, readOnly,
 }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [leftTab, setLeftTab]           = useState<LeftTab>('overview');
@@ -114,14 +115,14 @@ export default function ReflectionPage({
 
             {/* ── Left content ──────────────────────────── */}
             <div className="flex-1 min-w-0 flex flex-col overflow-hidden border-r-2 border-[#C19A6B]/25">
-              {leftTab === 'overview' && <StageOverviewTab currentStage={4} onNextStage={onNextStage} nextStageLabel="進入回顧與推理挑戰" />}
-              {leftTab === 'notes'    && <NotesPanel notes={notes} onAdd={onAdd} onEdit={onEdit} onDelete={onDelete} />}
+              {leftTab === 'overview' && <StageOverviewTab currentStage={4} scenarioId={scenarioId} onNextStage={onNextStage} nextStageLabel="進入回顧與推理挑戰" />}
+              {leftTab === 'notes'    && <NotesPanel notes={notes} onAdd={onAdd} onEdit={onEdit} onDelete={onDelete} readOnly={readOnly} />}
               {leftTab === 'myargs'   && <PreviousArgumentsTab scenarioId={scenarioId} />}
             </div>
 
             {/* ── Right: reflection chat ───────────────── */}
             <div className="w-[42%] sm:w-[44%] shrink-0 flex flex-col min-w-0 overflow-hidden">
-              <ReflectionChatPanel scenarioId={scenarioId} messages={messages} onMessagesChange={onMessagesChange} />
+              <ReflectionChatPanel scenarioId={scenarioId} messages={messages} onMessagesChange={onMessagesChange} readOnly={readOnly} />
             </div>
           </div>
         </div>
@@ -137,10 +138,11 @@ export default function ReflectionPage({
 }
 
 /* ── ReflectionChatPanel ──────────────────────────────── */
-function ReflectionChatPanel({ scenarioId, messages, onMessagesChange }: {
+function ReflectionChatPanel({ scenarioId, messages, onMessagesChange, readOnly }: {
   scenarioId: number;
   messages: Message[];
   onMessagesChange: (messages: Message[]) => void;
+  readOnly?: boolean;
 }) {
   const [input, setInput]       = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -230,7 +232,7 @@ function ReflectionChatPanel({ scenarioId, messages, onMessagesChange }: {
       </div>
 
       {/* Input area */}
-      <div className="shrink-0 px-3 sm:px-4 py-2.5 border-t-2 border-[#C19A6B]/25 bg-[#EDE0C4]/30">
+      {!readOnly && <div className="shrink-0 px-3 sm:px-4 py-2.5 border-t-2 border-[#C19A6B]/25 bg-[#EDE0C4]/30">
         <div className="flex items-end gap-2">
           <textarea
             value={input}
@@ -266,7 +268,7 @@ function ReflectionChatPanel({ scenarioId, messages, onMessagesChange }: {
             <Icon name="send" filled className="text-base" />
           </button>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
